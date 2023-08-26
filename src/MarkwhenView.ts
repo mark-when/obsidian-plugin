@@ -1,5 +1,5 @@
 // Obsidian
-import { TextFileView, WorkspaceLeaf, EventRef } from 'obsidian';
+import { TextFileView, WorkspaceLeaf, EventRef, normalizePath } from 'obsidian';
 import { MARKWHEN_ICON_NAME } from './icon';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
 
@@ -37,7 +37,7 @@ export class MarkwhenView extends TextFileView {
 
 		// default for development, will provide config/UI
 		this.inputFileName = this.file?.name ?? '';
-		this.outputType = 'calendar'; // infer or assign
+		this.outputType = 'timeline'; // infer or assign
 		this.serving = true;
 		this.port = 3000;
 		this.wsPort = 3001;
@@ -62,7 +62,6 @@ export class MarkwhenView extends TextFileView {
 					if (file.name == this.file?.name) {
 						console.log('Updating...');
 						const { parsed, rawText } = getParseFromFile(this.data);
-						console.log(rawText);
 						ws.send(
 							JSON.stringify({
 								type: 'state',
@@ -71,7 +70,6 @@ export class MarkwhenView extends TextFileView {
 								params: appState(parsed, rawText),
 							})
 						);
-						console.log('sent');
 					}
 				});
 			});
@@ -94,6 +92,12 @@ export class MarkwhenView extends TextFileView {
 			this.iframe.src = `http://localhost:${this.port}`;
 			this.iframe.height = '100%';
 			this.iframe.width = '100%';
+
+			// will generate file with bug
+			this.app.vault.adapter.write(
+				normalizePath(`./${this.outputType}.html`),
+				getInitialHtml(parsed, rawText, this.outputType)
+			);
 		}
 	}
 
@@ -123,22 +127,22 @@ export class MarkwhenView extends TextFileView {
 	}
 }
 
-function getParseFromFile(content: string) {
+const getParseFromFile = (content: string) => {
 	// put this.data into this
 	// provide an inline version
 	const parsed = parse(content);
 	return { parsed, rawText: content };
-}
+};
 
-function injectScript(domString: string, jsToInject: string) {
+const injectScript = (domString: string, jsToInject: string) => {
 	const html = parseHtml(domString);
 	const script = `<script>${jsToInject}</script>`;
 	const head = html.getElementsByTagName('head')[0];
 	head.innerHTML = script + head.innerHTML;
 	return html.toString();
-}
+};
 
-function templateHtml(viewType: Exclude<ViewType, 'json'>) {
+const templateHtml = (viewType: Exclude<ViewType, 'json'>) => {
 	switch (viewType) {
 		case 'timeline':
 			return timelineTemplate;
@@ -149,7 +153,7 @@ function templateHtml(viewType: Exclude<ViewType, 'json'>) {
 		default:
 			return timelineTemplate;
 	}
-}
+};
 
 const appState = (parsed: Timelines, rawText: string) => ({
 	app: {
@@ -162,11 +166,11 @@ const appState = (parsed: Timelines, rawText: string) => ({
 	},
 });
 
-function getInitialHtml(
+const getInitialHtml = (
 	parsed: Timelines,
 	rawText: string,
 	viewType: ViewType
-) {
+) => {
 	if (viewType === 'json') {
 		return JSON.stringify(parsed);
 	}
@@ -177,10 +181,4 @@ function getInitialHtml(
 			appState(parsed, rawText)
 		)}`
 	);
-}
-
-// 尝试一下导出本地包，然后配置
-
-// 挂到端口上，然后使用   iframe 连接
-// https://github.com/MSzturc/obsidian-advanced-slides/blob/f2fc58abd0b05723c11c0bd7a8cd8293fcffd5f7/src/revealServer.ts#L29
-// https://github.com/Pamela-Wang/Obsidian-Starter-Vaults/blob/555fb26656f708cb472ed6b0c9916818ee60053f/Potato%20Vault/.obsidian/plugins/obsidian-calibre-plugin/main.js#L94
+};
