@@ -94,6 +94,8 @@ export default class MarkwhenPlugin extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 	}
 
+	// functions in file modules are taken from https://github.com/yuleicul/obsidian-ketcher
+
 	async createAndOpenMWFile(
 		filename: string,
 		foldername?: string,
