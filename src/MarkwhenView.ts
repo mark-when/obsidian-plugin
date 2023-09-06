@@ -12,23 +12,16 @@ import calendarTemplate from '@markwhen/calendar/dist/index.html';
 import resumeTemplate from '@markwhen/resume/dist/index.html';
 
 // Dev-dep
-import express from 'express';
-import { Server } from 'http';
-import { WebSocketServer } from 'ws';
 import { parse as parseHtml } from 'node-html-parser';
 
 import MarkwhenPlugin from './main';
+import { join } from 'path';
 
 export class MarkwhenView extends TextFileView {
 	inputFileName: string;
 	outputType: ViewType;
 	serving: boolean;
-	port: number;
-	wsPort: number;
 	plugin: MarkwhenPlugin;
-	wss: WebSocketServer;
-	expressApp: express.Application;
-	server: Server;
 	iframe: HTMLIFrameElement;
 	vaultListener: EventRef;
 
@@ -39,9 +32,6 @@ export class MarkwhenView extends TextFileView {
 		this.inputFileName = this.file?.name ?? '';
 		this.outputType = 'timeline'; // infer or assign
 		this.serving = true;
-		this.port = 3000;
-		this.wsPort = 3001;
-
 		this.iframe = this.contentEl.createEl('iframe');
 	}
 
@@ -55,44 +45,48 @@ export class MarkwhenView extends TextFileView {
 		if (_clear) {
 			const { parsed, rawText } = getParseFromFile(this.data);
 
-			this.wss?.close();
-			this.wss = new WebSocketServer({ port: this.wsPort });
-			this.wss.on('connection', (ws) => {
-				this.vaultListener = this.app.vault.on('modify', (file) => {
-					if (file.name == this.file?.name) {
-						console.log('Updating...');
-						const { parsed, rawText } = getParseFromFile(this.data);
-						ws.send(
-							JSON.stringify({
-								type: 'state',
-								request: true,
-								id: `markwhen_1234`,
-								params: appState(parsed, rawText),
-							})
-						);
-					}
-				});
-			});
-
-			this.server?.close();
-			this.expressApp = express();
-			this.expressApp.get('/', (req, res) => {
-				const html = injectScript(
-					templateHtml(this.outputType as Exclude<ViewType, 'json'>),
-					`var __markwhen_wss_url = "ws://localhost:${this.wsPort}";
-				var __markwhen_initial_state = ${JSON.stringify(appState(parsed, rawText))}`
-				);
-				console.log(parsed);
-				res.status(200).send(html);
-			});
-
-			this.server = this.expressApp.listen(this.port);
-			console.log(`Server running at http://localhost:${this.port}`);
-
-			this.iframe.src = `http://localhost:${this.port}`;
+			this.iframe.src = this.app.vault.adapter.getResourcePath(
+				join(
+					this.app.vault.configDir,
+					'plugins',
+					'markwhen',
+					'assets',
+					'timeline.html'
+				)
+			);
 			this.iframe.height = '100%';
 			this.iframe.width = '100%';
 
+			this.iframe?.addEventListener('message', (e) => {
+				console.log(e);
+			});
+			setTimeout(() => {
+				this.iframe.contentWindow?.postMessage(
+					{
+						type: 'markwhenState',
+						request: true,
+						id: 'markwhen_1234',
+						params: {
+							rawText,
+							parsed: parsed.timelines,
+							transformed: parsed.timelines[0].events,
+						},
+					},
+					'*'
+				);
+				this.iframe.contentWindow?.postMessage(
+					{
+						type: 'appState',
+						request: true,
+						id: 'markwhen_1235',
+						params: {
+							isDark: true,
+							colorMap: {},
+						},
+					},
+					'*'
+				);
+			}, 1000);
 			// will generate file with bug
 			this.app.vault.adapter.write(
 				normalizePath(`./${this.outputType}.html`),
@@ -120,11 +114,7 @@ export class MarkwhenView extends TextFileView {
 
 	async onOpen() {}
 
-	async onClose() {
-		// disconnect
-		this.server.close();
-		this.wss.close();
-	}
+	async onClose() {}
 }
 
 const getParseFromFile = (content: string) => {
