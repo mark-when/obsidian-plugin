@@ -7,20 +7,20 @@ import {
 	TFile,
 	TFolder,
 	normalizePath,
+	TextComponent,
+	ExtraButtonComponent,
 } from 'obsidian';
 
 import { VIEW_TYPE_MARKWHEN, MarkwhenView } from './MarkwhenView';
 
-import { MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG } from './icon';
+import { MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG } from '../assets/icon';
 
 interface MarkwhenPluginSettings {
-	mySetting: string;
+	folder: string;
 }
 
-const DEFAULT_FOLDER = 'Markwhen';
-
 const DEFAULT_SETTINGS: MarkwhenPluginSettings = {
-	mySetting: 'default',
+	folder: 'Markwhen',
 };
 
 export default class MarkwhenPlugin extends Plugin {
@@ -29,13 +29,13 @@ export default class MarkwhenPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		addIcon(MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG);
-		// https://github.com/mark-when/markwhen/issues/131
+		addIcon(MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG); // https://github.com/mark-when/markwhen/issues/131
 
 		this.addRibbonIcon(
 			MARKWHEN_ICON_NAME, // icon id, built-in lucide or add your custom by `addIcon()`
 			'Create new Markwhen file', // tooltip
 			() => {
+				//TODO: better UX dealing with ribbon icons
 				this.createAndOpenMWFile(
 					`Markwhen ${new Date()
 						.toLocaleString('en-US', { hour12: false })
@@ -46,16 +46,11 @@ export default class MarkwhenPlugin extends Plugin {
 			}
 		);
 
-		// this.addCommand() // id, name, cb
-
 		this.registerView(VIEW_TYPE_MARKWHEN, (leaf) => new MarkwhenView(leaf));
 
 		this.registerExtensions(['mw'], VIEW_TYPE_MARKWHEN);
 
 		this.addSettingTab(new MarkwhenPluginSettingTab(this.app, this));
-
-		// file layer
-		// handling hot data
 	}
 
 	onunload() {}
@@ -72,18 +67,8 @@ export default class MarkwhenPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	/**
-	 * activateView opens the main Projects view in a new workspace leaf.
-	 * */
 	async activateView(): Promise<void> {
 		const leaf = this.app.workspace.getLeaf('tab');
-
-		// leaf.openFile(
-		// 	markwhenFile,
-		// 	!subpath || subpath === ''
-		// 		? { active }
-		// 		: { active, eState: { subpath } }
-		// );
 
 		leaf.setViewState({
 			type: VIEW_TYPE_MARKWHEN,
@@ -100,10 +85,9 @@ export default class MarkwhenPlugin extends Plugin {
 		filename: string,
 		foldername?: string,
 		initData?: string
-	): Promise<string> {
+	) {
 		const file = await this.createMWFile(filename, foldername, initData);
-		this.openMWFile(file, true);
-		return file.path;
+		this.app.workspace.getLeaf('tab').openFile(file);
 	}
 
 	async createMWFile(
@@ -111,8 +95,8 @@ export default class MarkwhenPlugin extends Plugin {
 		foldername?: string,
 		initData?: string
 	): Promise<TFile> {
-		const folderPath = normalizePath(foldername || DEFAULT_FOLDER); // normalizePath(foldername || this.settings.folder);
-		await this.checkAndCreateFolder(folderPath); //create folder if it does not exist
+		const folderPath = normalizePath(foldername || this.settings.folder); // normalizePath(foldername || this.settings.folder);
+		await this.checkAndCreateFolder(folderPath);
 		const fname = normalizePath(`${folderPath}/${filename}`);
 		const file = await this.app.vault.create(fname, initData ?? '');
 
@@ -133,24 +117,7 @@ export default class MarkwhenPlugin extends Plugin {
 		}
 		await vault.createFolder(folderPath);
 	}
-
-	public openMWFile(
-		drawingFile: TFile,
-		active: boolean = false,
-		subpath?: string
-	) {
-		const leaf = this.app.workspace.getLeaf('tab');
-
-		leaf.openFile(
-			drawingFile,
-			!subpath || subpath === ''
-				? { active }
-				: { active, eState: { subpath } }
-		);
-	}
 }
-
-// class SampleModal extends Modal
 
 class MarkwhenPluginSettingTab extends PluginSettingTab {
 	plugin: MarkwhenPlugin;
@@ -165,21 +132,25 @@ class MarkwhenPluginSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc("It's a secret")
-			.addText((text) =>
-				text
-					.setPlaceholder('Enter your secret')
-					.setValue(this.plugin.settings.mySetting)
-					.onChange(async (value) => {
-						this.plugin.settings.mySetting = value;
-						await this.plugin.saveSettings();
-					})
-			);
+		const folderSetting = new Setting(containerEl)
+			.setName('Default folder')
+			.setDesc('Default folder for new Markwhen files.')
+			.addExtraButton((button: ExtraButtonComponent) => {
+				button.setIcon('rotate-ccw').onClick(async () => {
+					folderText.setValue(DEFAULT_SETTINGS.folder);
+					this.plugin.settings.folder = DEFAULT_SETTINGS.folder; // Extract to Default Object
+					await this.plugin.saveSettings();
+				});
+			});
+
+		const folderText = new TextComponent(folderSetting.controlEl)
+			.setPlaceholder(DEFAULT_SETTINGS.folder)
+			.setValue(this.plugin.settings.folder)
+			.onChange(async (value) => {
+				this.plugin.settings.folder = value;
+				await this.plugin.saveSettings();
+			});
 	}
 }
 
-// TODO: toggle markdown/markwhen view
-// TODO: adapt light/dark
-// TODO: file system interface
+// TODO: toggle markdown/markwhen view & highlighting

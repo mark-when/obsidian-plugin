@@ -17,7 +17,7 @@ The plugin is in active deveplopment and **not** even ready for a beta test. Cur
 
 ### Install the plugin manually
 
-1. Go to the repo's latest [release page](https://github.com/Acylation/obsidian-markwhen/releases/latest), and download the files `main.js` and `manifest.json`. Alternatively, you can download the latest zip file and then unzip it to get the three files.
+1. Go to the repo's latest [release page](https://github.com/Acylation/obsidian-markwhen/releases/latest), and download the files `main.js` and `manifest.json`. Alternatively, you can download the latest zip file and then unzip it to get the files.
 2. Copy these files to your local path `[yourvault]/.obsidian/plugins/markwhen/`. You may need to create the folder `markwhen` by yourself.
 3. Launch/restart Obsidian, or refresh the plugin list, you will see this plugin.
 4. In the plugin list, enable `Markwhen` and enjoy!
