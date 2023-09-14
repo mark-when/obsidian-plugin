@@ -6,3 +6,8 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.workspace-leaf-content .view-content {
+  padding: 0;
+  overflow: hidden;
+}
