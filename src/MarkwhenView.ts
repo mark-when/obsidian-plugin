@@ -169,11 +169,7 @@ export class MarkwhenView extends TextFileView {
 	}
 
 	async onClose() {
-		// this.lpc = {
-		// 	postRequest: async () => {
-		// 		return;
-		// 	},
-		// };
+    this.lpc.close();
 	}
 
 	async setViewType(view: ViewType) {
