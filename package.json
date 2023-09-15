@@ -23,7 +23,7 @@
 		"typescript": "4.7.4"
 	},
 	"dependencies": {
-		"@markwhen/calendar": "^1.3.2",
+		"@markwhen/calendar": "^1.3.3",
 		"@markwhen/parser": "^0.9.3",
 		"@markwhen/timeline": "^1.2.3",
 		"@markwhen/view-client": "^1.4.1",
