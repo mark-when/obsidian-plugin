@@ -2,8 +2,7 @@ import { TextFileView, WorkspaceLeaf, EventRef, Menu, Notice } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON_NAME } from '../assets/icon';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
-
-import { parse } from '@markwhen/parser';
+import { parse, toDateRange, dateRangeToString } from '@markwhen/parser';
 import { useLpc, AppState, MarkwhenState } from '@markwhen/view-client';
 import { useColors } from './utils/colorMap';
 type ViewType = 'timeline' | 'calendar' | 'resume';
@@ -100,21 +99,13 @@ export class MarkwhenView extends TextFileView {
 		});
 
 		this.registerDomEvent(window, 'message', async (e) => {
-			if (e.source == this.iframe.contentWindow) {
-				// console.log(e);
-				// handle received global message here
-				/* Sample e.data
-					{
-						"type": "setHoveringPath",
-						"request": true,
-						"id": "markwhen_WIPSNWsi1BPsoc5PIRwRTMicRS3xVGGX"
-					}
-					{
-						"type": "appState",
-						"response": true,
-						"id": "markwhen_CkNiTDyiNpVq6ZAjbsrsDEn8PgL9ERbn"
-					}
-				*/
+			if (e.source == this.iframe.contentWindow && e.data.request) {
+				if (e.data.type === 'newEvent') {
+					const newEventString = `\n${dateRangeToString(
+						toDateRange(e.data.params.dateRangeIso)
+					)}: new event`;
+          this.setViewData(this.data + newEventString, false)
+				}
 			}
 		});
 
@@ -169,7 +160,7 @@ export class MarkwhenView extends TextFileView {
 	}
 
 	async onClose() {
-    this.lpc.close();
+		this.lpc.close();
 	}
 
 	async setViewType(view: ViewType) {
