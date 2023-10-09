@@ -11,3 +11,9 @@ If your plugin does not need CSS, delete this file.
   padding: 0;
   overflow: hidden;
 }
+
+.markwhenEditor {
+  max-width: var(--file-line-width);
+  margin-left: auto;
+  margin-right: auto;
+}
