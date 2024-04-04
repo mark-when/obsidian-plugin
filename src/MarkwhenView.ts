@@ -2,15 +2,14 @@ import {
 	TextFileView,
 	WorkspaceLeaf,
 	EventRef,
-	Menu,
-	Notice,
 	addIcon,
+	ViewStateResult,
 } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON_NAME } from '../assets/icon';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
 import { parse, toDateRange, dateRangeToString } from '@markwhen/parser';
-import { useLpc, AppState, MarkwhenState } from '@markwhen/view-client';
+import { AppState, MarkwhenState } from '@markwhen/view-client';
 import { useColors } from './utils/colorMap';
 import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
@@ -18,37 +17,30 @@ import { EditorState } from '@codemirror/state';
 type ViewType = 'timeline' | 'calendar' | 'resume' | 'text';
 
 import { join } from 'path';
-import { getNonce } from './utils/nonce';
 
 export class MarkwhenView extends TextFileView {
-	viewType: ViewType;
 	plugin: MarkwhenPlugin;
 	vaultListener: EventRef;
-	lpc: ReturnType<typeof useLpc>;
 
 	root: HTMLDivElement;
-	iframe: HTMLIFrameElement;
 	editorView: EditorView;
 
 	constructor(leaf: WorkspaceLeaf) {
 		super(leaf);
-
-		this.viewType = 'text';
-		this.iframe = this.contentEl.createEl('iframe');
-		this.iframe.height = '100%';
-		this.iframe.width = '100%';
-		this.iframe.style.display = 'none';
-
 		this.root = this.contentEl.createDiv({
 			cls: 'markdown-source-view cm-s-obsidian mod-cm6 is-folding is-live-preview show-properties is-readable-line-width node-insert-event markwhenEditor',
+		});
+		this.editorView = new EditorView({
+			state: this.initialEditorState(),
+			parent: this.root,
 		});
 	}
 
 	getViewData() {
-		return this.data;
+		return this.editorView?.state.sliceDoc();
 	}
 
-	initialEditorState(doc: string) {
+	initialEditorState(doc: string = '') {
 		return EditorState.create({
 			doc,
 			extensions: [
@@ -64,28 +56,13 @@ export class MarkwhenView extends TextFileView {
 
 	setViewData(data: string, _clear: boolean): void {
 		this.data = data;
-
-		if (this.viewType === 'text') {
-			if (!this.editorView) {
-				this.editorView = new EditorView({
-					state: this.initialEditorState(data),
-					parent: this.root,
-				});
-			} else {
-				this.editorView.setState(this.initialEditorState(data));
-			}
-		} else {
-			this.iframe.src = this.app.vault.adapter.getResourcePath(
-				join(
-					this.app.vault.configDir,
-					'plugins',
-					'obsidian-markwhen',
-					'assets',
-					`${this.viewType}.html`
-				)
-			);
-		}
-		this.updateView();
+		this.editorView.dispatch({
+			changes: {
+				insert: data,
+				from: 0,
+				to: this.editorView?.state.sliceDoc().length ?? 0,
+			},
+		});
 	}
 
 	getDisplayText() {
@@ -102,27 +79,12 @@ export class MarkwhenView extends TextFileView {
 		return VIEW_TYPE_MARKWHEN;
 	}
 
-	onPaneMenu(
-		menu: Menu,
-		source: 'more-options' | 'tab-header' | string
-	): void {
-		// insert in the front of the section
-		if (source == 'more-options' || source == 'tab-header') {
-			menu.addItem((item) => {
-				item.setTitle('Open as text')
-					.setIcon('file-text')
-					.onClick(() => {
-						new Notice('should open as plain text'); // TODO: setup another plaintext view, may require a cm6 plugin
-					})
-					.setSection('pane');
-			});
-		}
-
-		// load default menu items
-		super.onPaneMenu(menu, source);
-	}
-
 	clear() {} // preserve to implement class TextFileView
+
+	// setState(state: any, result: ViewStateResult): Promise<void> {
+	// 	this.setViewType(state.viewType);
+	// 	return super.setState(state, result);
+	// }
 
 	async onOpen() {
 		addIcon(
@@ -136,9 +98,24 @@ export class MarkwhenView extends TextFileView {
 		this.addAction(
 			'calendar',
 			'Click to view Calendar\n⌘+Click to open to the right',
-			(evt) => {
-				if (this.viewType === 'calendar') return;
-				this.setViewType('calendar');
+			async (evt) => {
+				// if (evt.metaKey) {
+				// 	const leaf = this.app.workspace.getLeaf('split');
+				// 	await leaf.openFile(this.file!);
+				// 	leaf.setViewState({
+				// 		type: VIEW_TYPE_MARKWHEN,
+				// 		active: true,
+				// 		state: {
+				// 			viewType: 'calendar',
+				// 		},
+				// 	});
+				// 	leaf.setEphemeralState({
+				// 		viewType: 'calendar',
+				// 	});
+				// 	return;
+				// }
+				// if (this.viewType === 'calendar') return;
+				// this.setViewType('calendar');
 			}
 		);
 
@@ -146,8 +123,8 @@ export class MarkwhenView extends TextFileView {
 			'markwhen',
 			'Click to view Timeline\n⌘+Click to open to the right',
 			(evt) => {
-				if (this.viewType === 'timeline') return;
-				this.setViewType('timeline');
+				// if (this.viewType === 'timeline') return;
+				// this.setViewType('timeline');
 			}
 		);
 
@@ -155,106 +132,52 @@ export class MarkwhenView extends TextFileView {
 			'pen-line',
 			'Click to edit text\n⌘+Click to open to the right',
 			(evt) => {
-				console.log('event', evt);
+				// console.log('event', evt);
 			}
 		);
 
-		this.registerDomEvent(window, 'message', async (e) => {
-			if (e.source == this.iframe.contentWindow && e.data.request) {
-				if (e.data.type === 'newEvent') {
-					const newEventString = `\n${dateRangeToString(
-						toDateRange(e.data.params.dateRangeIso)
-					)}: new event`;
-					this.setViewData(this.data + newEventString, false);
-				}
-			}
-		});
-
-		this.registerInterval(
-			window.setInterval(() => {
-				this.iframe.contentWindow?.postMessage(
-					{
-						type: 'markwhenState',
-						request: true,
-						id: `markwhen_${getNonce()}`,
-						params: this.getMarkwhenState(),
-					},
-					'*'
-				);
-				this.iframe.contentWindow?.postMessage(
-					{
-						type: 'appState',
-						request: true,
-						id: `markwhen_${getNonce()}`,
-						params: this.getAppState(),
-					},
-					'*'
-				);
-			}, 1000) // init before timer?
-		);
-
-		this.lpc = useLpc({
-			markwhenState: async (newState) => {
-				this.iframe.contentWindow?.postMessage(
-					{
-						type: 'markwhenState',
-						request: true,
-						id: `markwhen_${getNonce()}`,
-						params: newState,
-					},
-					'*'
-				);
-			},
-
-			appState: (newState) => {
-				this.iframe.contentWindow?.postMessage(
-					{
-						type: 'appState',
-						request: true,
-						id: `markwhen_${getNonce()}`,
-						params: newState,
-					},
-					'*'
-				);
-			},
-		});
+		// this.registerDomEvent(window, 'message', async (e) => {
+		// 	if (e.source == this.iframe.contentWindow && e.data.request) {
+		// 		if (e.data.type === 'newEvent') {
+		// 			const newEventString = `\n${dateRangeToString(
+		// 				toDateRange(e.data.params.dateRangeIso)
+		// 			)}: new event`;
+		// 			this.setViewData(this.data + newEventString, false);
+		// 		}
+		// 	}
+		// });
 	}
 
 	async onClose() {
-		this.lpc.close();
+		// this.lpc.close();
 	}
 
-	async setViewType(view: ViewType) {
-		this.viewType = view;
-		this.iframe.src = this.app.vault.adapter.getResourcePath(
-			join(
-				this.app.vault.configDir,
-				'plugins',
-				'obsidian-markwhen',
-				'assets',
-				`${this.viewType}.html`
-			)
-		);
-		this.updateView();
-	}
-
-	async updateView() {
-		const rawText = this.data;
-		const parsed = parse(rawText);
-		const parseResult = {
-			markwhenState: {
-				rawText,
-				parsed: parsed.timelines,
-				transformed: parsed.timelines[0].events,
-			},
-			appState: {
-				...this.getAppState(),
-				colorMap: useColors(parsed.timelines[0]),
-			},
-		};
-		this.lpc.postRequest('markwhenState', parseResult?.markwhenState);
-		this.lpc.postRequest('appState', parseResult?.appState);
-	}
+	// async setViewType(viewType?: ViewType) {
+	// 	if (!viewType) {
+	// 		return;
+	// 	}
+	// 	this.viewType = viewType;
+	// 	if (this.viewType === 'text') {
+	// 		if (!this.editorView) {
+	// 			this.editorView = new EditorView({
+	// 				state: this.initialEditorState(this.data),
+	// 				parent: this.root,
+	// 			});
+	// 		} else {
+	// 			this.editorView.setState(this.initialEditorState(this.data));
+	// 		}
+	// 	} else {
+	// 		this.iframe.src = this.app.vault.adapter.getResourcePath(
+	// 			join(
+	// 				this.app.vault.configDir,
+	// 				'plugins',
+	// 				'obsidian-markwhen',
+	// 				'assets',
+	// 				`${this.viewType}.html`
+	// 			)
+	// 		);
+	// 	}
+	// }
 
 	getMarkwhenState(): MarkwhenState {
 		const parsed = parse(this.data);
