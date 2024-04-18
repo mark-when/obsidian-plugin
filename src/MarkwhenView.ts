@@ -24,16 +24,54 @@ export class MarkwhenView extends TextFileView {
 
 	root: HTMLDivElement;
 	editorView: EditorView;
+	viewType!: ViewType;
+	views: Partial<{ [vt in ViewType]: HTMLIFrameElement }>;
 
-	constructor(leaf: WorkspaceLeaf) {
+	constructor(leaf: WorkspaceLeaf, viewType: ViewType = 'text') {
 		super(leaf);
+		this.viewType = viewType;
 		this.root = this.contentEl.createDiv({
 			cls: 'markdown-source-view cm-s-obsidian mod-cm6 is-folding is-live-preview show-properties is-readable-line-width node-insert-event markwhenEditor',
+			attr: {
+				style: 'display: flex',
+			},
 		});
 		this.editorView = new EditorView({
 			state: this.initialEditorState(),
 			parent: this.root,
 		});
+		this.views = {};
+		for (const view of ['timeline', 'calendar', 'resume'] as ViewType[]) {
+			this.views[view] = this.contentEl.createEl('iframe', {
+				attr: {
+					style: 'display: none',
+				},
+			});
+		}
+	}
+
+	createIFrameForViewType(
+		viewType: ViewType,
+		root: HTMLElement
+	): HTMLIFrameElement {
+		return root.createEl('iframe', {
+			attr: {
+				style: 'display: block; height: 100%; width: 100%',
+				src: this.srcForViewType(viewType),
+			},
+		});
+	}
+
+	srcForViewType(vt: ViewType) {
+		return this.app.vault.adapter.getResourcePath(
+			join(
+				this.app.vault.configDir,
+				'plugins',
+				'obsidian-markwhen',
+				'assets',
+				`${vt}.html`
+			)
+		);
 	}
 
 	getViewData() {
@@ -56,7 +94,7 @@ export class MarkwhenView extends TextFileView {
 
 	setViewData(data: string, _clear: boolean): void {
 		this.data = data;
-		this.editorView.dispatch({
+		this.editorView?.dispatch({
 			changes: {
 				insert: data,
 				from: 0,
@@ -86,6 +124,16 @@ export class MarkwhenView extends TextFileView {
 	// 	return super.setState(state, result);
 	// }
 
+	async split(viewType: ViewType) {
+		const leaf = this.app.workspace.getLeaf('split');
+		await leaf.open(new MarkwhenView(leaf, viewType));
+		await leaf.openFile(this.file!);
+		await leaf.setViewState({
+			type: VIEW_TYPE_MARKWHEN,
+			active: true,
+		});
+	}
+
 	async onOpen() {
 		addIcon(
 			'markwhen',
@@ -95,47 +143,32 @@ export class MarkwhenView extends TextFileView {
 			'pen-line',
 			'<path d="M 48 80 h 36" stroke="currentColor" stroke-width="8"/><path stroke="currentColor" stroke-width="8" d="M 66 14 a 8.48 8.48 90 0 1 12 12 L 28 76 l -16 4 l 4 -16 Z"/>'
 		);
+		const action = (viewType: ViewType) => async (evt: MouseEvent) => {
+			if (evt.metaKey) {
+				await this.split(viewType);
+			} else if (this.viewType !== viewType) {
+				await this.setViewType(viewType);
+			}
+		};
+
 		this.addAction(
 			'calendar',
 			'Click to view Calendar\n⌘+Click to open to the right',
-			async (evt) => {
-				// if (evt.metaKey) {
-				// 	const leaf = this.app.workspace.getLeaf('split');
-				// 	await leaf.openFile(this.file!);
-				// 	leaf.setViewState({
-				// 		type: VIEW_TYPE_MARKWHEN,
-				// 		active: true,
-				// 		state: {
-				// 			viewType: 'calendar',
-				// 		},
-				// 	});
-				// 	leaf.setEphemeralState({
-				// 		viewType: 'calendar',
-				// 	});
-				// 	return;
-				// }
-				// if (this.viewType === 'calendar') return;
-				// this.setViewType('calendar');
-			}
+			action('calendar')
 		);
 
 		this.addAction(
 			'markwhen',
 			'Click to view Timeline\n⌘+Click to open to the right',
-			(evt) => {
-				// if (this.viewType === 'timeline') return;
-				// this.setViewType('timeline');
-			}
+			action('timeline')
 		);
 
 		this.addAction(
 			'pen-line',
 			'Click to edit text\n⌘+Click to open to the right',
-			(evt) => {
-				// console.log('event', evt);
-			}
+			action('text')
 		);
-
+		this.setViewType(this.viewType);
 		// this.registerDomEvent(window, 'message', async (e) => {
 		// 	if (e.source == this.iframe.contentWindow && e.data.request) {
 		// 		if (e.data.type === 'newEvent') {
@@ -152,32 +185,53 @@ export class MarkwhenView extends TextFileView {
 		// this.lpc.close();
 	}
 
-	// async setViewType(viewType?: ViewType) {
-	// 	if (!viewType) {
-	// 		return;
-	// 	}
-	// 	this.viewType = viewType;
-	// 	if (this.viewType === 'text') {
-	// 		if (!this.editorView) {
-	// 			this.editorView = new EditorView({
-	// 				state: this.initialEditorState(this.data),
-	// 				parent: this.root,
-	// 			});
-	// 		} else {
-	// 			this.editorView.setState(this.initialEditorState(this.data));
-	// 		}
-	// 	} else {
-	// 		this.iframe.src = this.app.vault.adapter.getResourcePath(
-	// 			join(
-	// 				this.app.vault.configDir,
-	// 				'plugins',
-	// 				'obsidian-markwhen',
-	// 				'assets',
-	// 				`${this.viewType}.html`
-	// 			)
-	// 		);
-	// 	}
-	// }
+	async setViewType(viewType?: ViewType) {
+		if (!viewType) {
+			return;
+		}
+		this.viewType = viewType;
+		if (this.viewType === 'text') {
+			if (!this.editorView) {
+				this.editorView = new EditorView({
+					state: this.initialEditorState(this.data),
+					parent: this.root,
+				});
+			} else {
+				this.editorView.setState(this.initialEditorState(this.data));
+			}
+			for (const vt of ['timeline', 'resume', 'calendar']) {
+				this.views[vt as ViewType]?.setAttr('style', 'display: none');
+			}
+			this.root.setCssStyles({
+				display: 'flex',
+			});
+		} else {
+			this.root.setCssStyles({
+				display: 'none',
+			});
+			for (const vt of ['timeline', 'calendar', 'resume']) {
+				if (vt === viewType) {
+					const frame = this.views[viewType];
+					if (frame) {
+						if (!frame.src) {
+							frame.setAttrs({
+								src: this.srcForViewType(vt),
+							});
+						}
+						frame.setAttr(
+							'style',
+							'display: block; height: 100%; width: 100%'
+						);
+					}
+				} else {
+					this.views[vt as ViewType]?.setAttr(
+						'style',
+						'display: none'
+					);
+				}
+			}
+		}
+	}
 
 	getMarkwhenState(): MarkwhenState {
 		const parsed = parse(this.data);
