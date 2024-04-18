@@ -73,7 +73,6 @@ export default class MarkwhenPlugin extends Plugin {
 		leaf.setViewState({
 			type: VIEW_TYPE_MARKWHEN,
 			active: true,
-			state: {},
 		});
 
 		this.app.workspace.revealLeaf(leaf);
