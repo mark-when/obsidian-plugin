@@ -4,6 +4,7 @@ import {
 	EventRef,
 	addIcon,
 	ViewStateResult,
+	MarkdownView,
 } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON_NAME } from '../assets/icon';
@@ -11,18 +12,18 @@ export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
 import { parse, toDateRange, dateRangeToString } from '@markwhen/parser';
 import { AppState, MarkwhenState } from '@markwhen/view-client';
 import { useColors } from './utils/colorMap';
-import { EditorView } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { EditorView, ViewPlugin } from '@codemirror/view';
+import { EditorState, StateEffect } from '@codemirror/state';
+import { MarkwhenCodemirrorPlugin } from './MarkwhenCodemirrorPlugin';
 
-type ViewType = 'timeline' | 'calendar' | 'resume' | 'text';
+type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
 
 import { join } from 'path';
 
-export class MarkwhenView extends TextFileView {
+export class MarkwhenView extends MarkdownView {
 	plugin: MarkwhenPlugin;
 	vaultListener: EventRef;
 
-	root: HTMLDivElement;
 	editorView: EditorView;
 	viewType!: ViewType;
 	views: Partial<{ [vt in ViewType]: HTMLIFrameElement }>;
@@ -30,23 +31,14 @@ export class MarkwhenView extends TextFileView {
 	constructor(leaf: WorkspaceLeaf, viewType: ViewType = 'text') {
 		super(leaf);
 		this.viewType = viewType;
-		this.root = this.contentEl.createDiv({
-			cls: 'markdown-source-view cm-s-obsidian mod-cm6 is-folding is-live-preview show-properties is-readable-line-width node-insert-event markwhenEditor',
-			attr: {
-				style: 'display: flex',
-			},
-		});
-		this.editorView = new EditorView({
-			state: this.initialEditorState(),
-			parent: this.root,
-		});
 		this.views = {};
-		for (const view of ['timeline', 'calendar', 'resume'] as ViewType[]) {
+		for (const view of ['timeline', 'calendar', 'oneview'] as ViewType[]) {
 			this.views[view] = this.contentEl.createEl('iframe', {
 				attr: {
-					style: 'display: none',
+					style: 'height: 100%; width: 100%',
 				},
 			});
+			this.views[view]?.addClass('mw');
 		}
 	}
 
@@ -56,7 +48,7 @@ export class MarkwhenView extends TextFileView {
 	): HTMLIFrameElement {
 		return root.createEl('iframe', {
 			attr: {
-				style: 'display: block; height: 100%; width: 100%',
+				style: 'height: 100%; width: 100%',
 				src: this.srcForViewType(viewType),
 			},
 		});
@@ -74,35 +66,6 @@ export class MarkwhenView extends TextFileView {
 		);
 	}
 
-	getViewData() {
-		return this.editorView?.state.sliceDoc();
-	}
-
-	initialEditorState(doc: string = '') {
-		return EditorState.create({
-			doc,
-			extensions: [
-				EditorView.updateListener.of((update) => {
-					if (update.docChanged) {
-						this.data = update.state.sliceDoc();
-						this.requestSave();
-					}
-				}),
-			],
-		});
-	}
-
-	setViewData(data: string, _clear: boolean): void {
-		this.data = data;
-		this.editorView?.dispatch({
-			changes: {
-				insert: data,
-				from: 0,
-				to: this.editorView?.state.sliceDoc().length ?? 0,
-			},
-		});
-	}
-
 	getDisplayText() {
 		return this.file?.name ?? 'Markwhen';
 	}
@@ -117,13 +80,6 @@ export class MarkwhenView extends TextFileView {
 		return VIEW_TYPE_MARKWHEN;
 	}
 
-	clear() {} // preserve to implement class TextFileView
-
-	// setState(state: any, result: ViewStateResult): Promise<void> {
-	// 	this.setViewType(state.viewType);
-	// 	return super.setState(state, result);
-	// }
-
 	async split(viewType: ViewType) {
 		const leaf = this.app.workspace.getLeaf('split');
 		await leaf.open(new MarkwhenView(leaf, viewType));
@@ -135,6 +91,14 @@ export class MarkwhenView extends TextFileView {
 	}
 
 	async onOpen() {
+		if (this.currentMode.cm) {
+			this.editorView = this.currentMode.cm;
+			this.editorView.dispatch({
+				effects: StateEffect.appendConfig.of(
+					ViewPlugin.fromClass(MarkwhenCodemirrorPlugin)
+				),
+			});
+		}
 		addIcon(
 			'markwhen',
 			'<path fill="currentColor" d="M 87.175 87.175 H 52.8 C 49.0188 87.175 45.925 84.0813 45.925 80.3 S 49.0188 73.425 52.8 73.425 H 87.175 C 90.9563 73.425 94.05 76.5188 94.05 80.3 S 90.9563 87.175 87.175 87.175 Z M 80.3 59.675 H 32.175 C 28.3938 59.675 25.3 56.5813 25.3 52.8 S 28.3938 45.925 32.175 45.925 H 80.3 C 84.0813 45.925 87.175 49.0188 87.175 52.8 S 84.0813 59.675 80.3 59.675 Z M 18.425 32.175 H 18.425 C 14.6438 32.175 11.55 29.0813 11.55 25.3 S 14.6438 18.425 18.425 18.425 H 32.175 C 35.9563 18.425 39.05 21.5188 39.05 25.3 S 35.9563 32.175 32.175 32.175 Z"></path>'
@@ -153,14 +117,19 @@ export class MarkwhenView extends TextFileView {
 
 		this.addAction(
 			'calendar',
-			'Click to view Calendar\n⌘+Click to open to the right',
+			'Click to view calendar\n⌘+Click to open to the right',
 			action('calendar')
 		);
 
 		this.addAction(
 			'markwhen',
-			'Click to view Timeline\n⌘+Click to open to the right',
+			'Click to view timeline\n⌘+Click to open to the right',
 			action('timeline')
+		);
+		this.addAction(
+			'oneview',
+			'Click to view vertical timeline',
+			action('oneview')
 		);
 
 		this.addAction(
@@ -181,35 +150,25 @@ export class MarkwhenView extends TextFileView {
 		// });
 	}
 
-	async onClose() {
-		// this.lpc.close();
-	}
-
 	async setViewType(viewType?: ViewType) {
 		if (!viewType) {
 			return;
 		}
 		this.viewType = viewType;
 		if (this.viewType === 'text') {
-			if (!this.editorView) {
-				this.editorView = new EditorView({
-					state: this.initialEditorState(this.data),
-					parent: this.root,
-				});
-			} else {
-				this.editorView.setState(this.initialEditorState(this.data));
+			for (const vt of ['timeline', 'oneview', 'calendar']) {
+				this.views[vt as ViewType]?.removeClass('mw-active');
 			}
-			for (const vt of ['timeline', 'resume', 'calendar']) {
-				this.views[vt as ViewType]?.setAttr('style', 'display: none');
+			for (let i = 0; i < this.contentEl.children.length; i++) {
+				const el = this.contentEl.children.item(i);
+				if (el?.nodeName === 'IFRAME') {
+					el.addClass('mw-hidden');
+				} else {
+					el?.removeClass('mw-hidden');
+				}
 			}
-			this.root.setCssStyles({
-				display: 'flex',
-			});
 		} else {
-			this.root.setCssStyles({
-				display: 'none',
-			});
-			for (const vt of ['timeline', 'calendar', 'resume']) {
+			for (const vt of ['timeline', 'calendar', 'oneview']) {
 				if (vt === viewType) {
 					const frame = this.views[viewType];
 					if (frame) {
@@ -218,16 +177,18 @@ export class MarkwhenView extends TextFileView {
 								src: this.srcForViewType(vt),
 							});
 						}
-						frame.setAttr(
-							'style',
-							'display: block; height: 100%; width: 100%'
-						);
+						frame.addClass('active');
 					}
 				} else {
-					this.views[vt as ViewType]?.setAttr(
-						'style',
-						'display: none'
-					);
+					this.views[vt as ViewType]?.removeClass('active');
+				}
+			}
+			for (let i = 0; i < this.contentEl.children.length; i++) {
+				const el = this.contentEl.children.item(i);
+				if (el?.nodeName === 'IFRAME' && el.hasClass('active')) {
+					el.removeClass('mw-hidden');
+				} else {
+					el?.addClass('mw-hidden');
 				}
 			}
 		}
