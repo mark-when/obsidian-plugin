@@ -9,11 +9,10 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
 		"lint": "eslint ./src",
-		"vite": "vite vite.config.ts",
-		"viteBuild": "vite build"
+		"vite": "vite build --watch & watch ./copyAssets.sh"
 	},
 	"keywords": [],
-	"author": "Acylation",
+	"author": "Rob Koch",
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^20.12.7",
@@ -21,7 +20,7 @@
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
-		"obsidian": "^1.4.11",
+		"obsidian": "^1.5.7-1",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4",
 		"vite": "^5.2.9",
@@ -31,6 +30,7 @@
 		"@codemirror/state": "^6.4.1",
 		"@codemirror/view": "^6.26.3",
 		"@markwhen/calendar": "^1.3.3",
+		"@markwhen/oneview": "^1.0.0",
 		"@markwhen/parser": "^0.10.15",
 		"@markwhen/timeline": "^1.3.0",
 		"@markwhen/view-client": "^1.4.3",
