@@ -1,11 +1,9 @@
 import { UserConfig, defineConfig } from 'vite';
 import path from 'path';
-import * as fsp from 'fs/promises';
 import builtins from 'builtin-modules';
 
 export default defineConfig(async ({ mode }) => {
-	const { normalize, resolve } = path;
-	const { rm } = fsp;
+	const { resolve } = path;
 	const prod = mode === 'production';
 
 	return {
