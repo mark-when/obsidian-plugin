@@ -4,7 +4,7 @@
 	"version": "developer",
 	"minAppVersion": "1.0.0",
 	"description": "Markwhen integration for Obsidian.md",
-	"author": "kochrt",
+	"author": "Markwhen",
 	"authorUrl": "https://github.com/mark-when",
 	"isDesktopOnly": false
 }
