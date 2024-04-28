@@ -1,20 +1,23 @@
 import {
-	TextFileView,
 	WorkspaceLeaf,
 	EventRef,
 	addIcon,
-	ViewStateResult,
 	MarkdownView,
+	Editor,
+	TFile,
 } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON_NAME } from '../assets/icon';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
-import { parse, toDateRange, dateRangeToString } from '@markwhen/parser';
+import { Timeline, parse } from '@markwhen/parser';
 import { AppState, MarkwhenState } from '@markwhen/view-client';
 import { useColors } from './utils/colorMap';
 import { EditorView, ViewPlugin } from '@codemirror/view';
-import { EditorState, StateEffect } from '@codemirror/state';
-import { MarkwhenCodemirrorPlugin } from './MarkwhenCodemirrorPlugin';
+import { StateEffect } from '@codemirror/state';
+import {
+	MarkwhenCodemirrorPlugin,
+	parseResult,
+} from './MarkwhenCodemirrorPlugin';
 
 type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
 
@@ -27,6 +30,8 @@ export class MarkwhenView extends MarkdownView {
 	editorView: EditorView;
 	viewType!: ViewType;
 	views: Partial<{ [vt in ViewType]: HTMLIFrameElement }>;
+	codemirrorPlugin: ViewPlugin<MarkwhenCodemirrorPlugin>;
+	updateId: number = 0;
 
 	constructor(leaf: WorkspaceLeaf, viewType: ViewType = 'text') {
 		super(leaf);
@@ -40,6 +45,7 @@ export class MarkwhenView extends MarkdownView {
 			});
 			this.views[view]?.addClass('mw');
 		}
+		this.codemirrorPlugin = ViewPlugin.fromClass(MarkwhenCodemirrorPlugin);
 	}
 
 	createIFrameForViewType(
@@ -90,15 +96,70 @@ export class MarkwhenView extends MarkdownView {
 		});
 	}
 
-	async onOpen() {
-		if (this.currentMode.cm) {
-			this.editorView = this.currentMode.cm;
+	updateVisualization(mw: Timeline) {
+		const frame = this.activeFrame();
+		if (!frame) {
+			return;
+		}
+		frame.contentWindow?.postMessage(
+			{
+				type: 'appState',
+				request: true,
+				id: `markwhen_${this.updateId++}`,
+				params: this.getAppState(mw),
+			},
+			'*'
+		);
+		frame.contentWindow?.postMessage(
+			{
+				type: 'markwhenState',
+				request: true,
+				id: `markwhen_${this.updateId++}`,
+				params: this.getMarkwhenState(mw),
+			},
+			'*'
+		);
+	}
+
+	registerExtensions() {
+		const cm = this.getCodeMirror();
+		if (cm) {
+			this.editorView = cm;
+			const parseListener = EditorView.updateListener.of((update) => {
+				update.transactions.forEach((tr) => {
+					tr.effects.forEach((effect) => {
+						if (effect.is(parseResult)) {
+							this.updateVisualization(effect.value);
+						}
+					});
+				});
+			});
 			this.editorView.dispatch({
-				effects: StateEffect.appendConfig.of(
-					ViewPlugin.fromClass(MarkwhenCodemirrorPlugin)
-				),
+				effects: StateEffect.appendConfig.of([
+					this.codemirrorPlugin,
+					parseListener,
+				]),
 			});
 		}
+	}
+
+	async onLoadFile(file: TFile) {
+		super.onLoadFile(file);
+
+		// Idk how else to register these extensions - I don't want to
+		// register them in the main file because I need the update listener
+		// to dispatch updates to visualizations.
+		//
+		// Meanwhile the extensions aren't
+		// registered when I don't use setTimeout. Is there another hook I can use?
+		// Other than onLoadFile or onOpen?
+		setTimeout(() => {
+			this.registerExtensions();
+		}, 500);
+	}
+
+	async onOpen() {
+		super.onOpen();
 		addIcon(
 			'markwhen',
 			'<path fill="currentColor" d="M 87.175 87.175 H 52.8 C 49.0188 87.175 45.925 84.0813 45.925 80.3 S 49.0188 73.425 52.8 73.425 H 87.175 C 90.9563 73.425 94.05 76.5188 94.05 80.3 S 90.9563 87.175 87.175 87.175 Z M 80.3 59.675 H 32.175 C 28.3938 59.675 25.3 56.5813 25.3 52.8 S 28.3938 45.925 32.175 45.925 H 80.3 C 84.0813 45.925 87.175 49.0188 87.175 52.8 S 84.0813 59.675 80.3 59.675 Z M 18.425 32.175 H 18.425 C 14.6438 32.175 11.55 29.0813 11.55 25.3 S 14.6438 18.425 18.425 18.425 H 32.175 C 35.9563 18.425 39.05 21.5188 39.05 25.3 S 35.9563 32.175 32.175 32.175 Z"></path>'
@@ -148,6 +209,16 @@ export class MarkwhenView extends MarkdownView {
 		// 		}
 		// 	}
 		// });
+		this.registerDomEvent(window, 'message', async (e) => {});
+	}
+
+	activeFrame() {
+		for (let i = 0; i < this.contentEl.children.length; i++) {
+			const el = this.contentEl.children.item(i);
+			if (el?.nodeName === 'IFRAME' && el.hasClass('active')) {
+				return el as HTMLIFrameElement;
+			}
+		}
 	}
 
 	async setViewType(viewType?: ViewType) {
@@ -192,18 +263,27 @@ export class MarkwhenView extends MarkdownView {
 				}
 			}
 		}
+		this.updateVisualization(this.getMw()!);
 	}
 
-	getMarkwhenState(): MarkwhenState {
-		const parsed = parse(this.data);
+	getCodeMirror(): EditorView | undefined {
+		// @ts-ignore
+		return this.editor.cm;
+	}
+
+	getMw(): Timeline | undefined {
+		return this.getCodeMirror()?.plugin(this.codemirrorPlugin)?.markwhen;
+	}
+
+	getMarkwhenState(mw: Timeline): MarkwhenState | undefined {
 		return {
 			rawText: this.data,
-			parsed: parsed.timelines,
-			transformed: parsed.timelines[0].events,
+			parsed: [mw],
+			transformed: mw.events,
 		};
 	}
 
-	getAppState(): AppState {
+	getAppState(mw: Timeline): AppState {
 		const isDark =
 			window.document.body.attributes
 				.getNamedItem('class')
@@ -216,14 +296,7 @@ export class MarkwhenView extends MarkdownView {
 			isDark,
 			hoveringPath: undefined,
 			detailPath: undefined,
-			colorMap: useColors(parse(this.data).timelines[0]) ?? {},
+			colorMap: mw ? useColors(mw) ?? {} : {},
 		};
 	}
 }
-
-// TODO
-// handle hot data
-// onChange:{
-//   this.data = await (getHotData)
-//   this.requestSave(this.data)
-// }

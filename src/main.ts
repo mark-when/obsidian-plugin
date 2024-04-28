@@ -14,8 +14,6 @@ import {
 import { VIEW_TYPE_MARKWHEN, MarkwhenView } from './MarkwhenView';
 
 import { MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG } from '../assets/icon';
-import { ViewPlugin } from '@codemirror/view';
-import { MarkwhenCodemirrorPlugin } from './MarkwhenCodemirrorPlugin';
 
 interface MarkwhenPluginSettings {
 	folder: string;
@@ -54,9 +52,6 @@ export default class MarkwhenPlugin extends Plugin {
 		this.registerView(VIEW_TYPE_MARKWHEN, (leaf) => new MarkwhenView(leaf));
 
 		this.registerExtensions(['mw'], VIEW_TYPE_MARKWHEN);
-		this.registerEditorExtension([
-			ViewPlugin.fromClass(MarkwhenCodemirrorPlugin),
-		]);
 
 		this.addSettingTab(new MarkwhenPluginSettingTab(this.app, this));
 	}

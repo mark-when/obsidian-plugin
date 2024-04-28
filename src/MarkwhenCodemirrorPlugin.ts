@@ -37,24 +37,22 @@ export const parseResult = StateEffect.define<Timeline>();
 export class MarkwhenCodemirrorPlugin implements PluginValue {
 	markwhen = emptyTimeline();
 	view: EditorView;
+	worker = useParserWorker((mw) => {
+		console.log(mw);
+		this.markwhen = mw;
+		this.view.dispatch({
+			effects: parseResult.of(mw),
+		});
+	});
 
 	constructor(view: EditorView) {
 		this.view = view;
-		this.postToWorker(view.state.doc.sliceString(0));
+		this.worker(view.state.doc.sliceString(0));
 	}
 
 	update(update: ViewUpdate): void {
 		if (update.docChanged) {
-			this.postToWorker(update.state.sliceDoc());
+			this.worker(update.state.sliceDoc());
 		}
-	}
-
-	postToWorker(s: string) {
-		useParserWorker((mw) => {
-			this.markwhen = mw;
-			this.view.dispatch({
-				effects: parseResult.of(mw),
-			});
-		});
 	}
 }
