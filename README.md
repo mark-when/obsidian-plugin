@@ -8,16 +8,27 @@ This plugin integrates [Markwhen](https://github.com/mark-when/markwhen/) into [
 > Latest release: NaN  
 > Document version: developer
 
+## Development
+
+Ensure you first have Obsidian installed. If the path to your vault is something other than `~/Documents/Obsidian Vault`, update `copyAssets.sh` to point to your vault's location.
+
+```sh
+git clone git@github.com:mark-when/obsidian-plugin.git
+cd obsidian-plugin
+npm i
+npm run vite
+```
+
 ## Installation
 
 > **Note**  
 > Make sure that you are not in the **Restricted Mode**.
 
-The plugin is in active deveplopment and **not** even ready for a beta test. Current release have bug and can not run properly.
+The plugin is in active deveplopment.
 
 ### Install the plugin manually
 
-1. Go to the repo's latest [release page](https://github.com/Acylation/obsidian-markwhen/releases/latest), and download the files `main.js` and `manifest.json`. Alternatively, you can download the latest zip file and then unzip it to get the files.
+1. Go to the repo's latest [release page](https://github.com/mark-when/obsidian-plugin/releases/latest), and download the files `main.js`, `manifest.json`, and everything in `assets/`.
 2. Copy these files to your local path `[yourvault]/.obsidian/plugins/markwhen/`. You may need to create the folder `markwhen` by yourself.
 3. Launch/restart Obsidian, or refresh the plugin list, you will see this plugin.
 4. In the plugin list, enable `Markwhen` and enjoy!
