@@ -3,13 +3,12 @@ import {
 	EventRef,
 	addIcon,
 	MarkdownView,
-	Editor,
 	TFile,
 } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON_NAME } from '../assets/icon';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
-import { Timeline, parse } from '@markwhen/parser';
+import { Timeline, dateRangeToString, toDateRange } from '@markwhen/parser';
 import { AppState, MarkwhenState } from '@markwhen/view-client';
 import { useColors } from './utils/colorMap';
 import { EditorView, ViewPlugin } from '@codemirror/view';
@@ -199,17 +198,30 @@ export class MarkwhenView extends MarkdownView {
 			action('text')
 		);
 		this.setViewType(this.viewType);
-		// this.registerDomEvent(window, 'message', async (e) => {
-		// 	if (e.source == this.iframe.contentWindow && e.data.request) {
-		// 		if (e.data.type === 'newEvent') {
-		// 			const newEventString = `\n${dateRangeToString(
-		// 				toDateRange(e.data.params.dateRangeIso)
-		// 			)}: new event`;
-		// 			this.setViewData(this.data + newEventString, false);
-		// 		}
-		// 	}
-		// });
-		this.registerDomEvent(window, 'message', async (e) => {});
+		this.registerDomEvent(window, 'message', async (e) => {
+			if (
+				e.source == this.activeFrame()?.contentWindow &&
+				e.data.request
+			) {
+				if (e.data.type === 'newEvent') {
+					const newEventString = `\n${dateRangeToString(
+						toDateRange(e.data.params.dateRangeIso)
+					)}: new event`;
+					// this.getCodeMirror()?.dispatch({
+					// 	changes: {
+					// 		from: this.data.length,
+					// 		to: this.data.length,
+					// 		insert: newEventString,
+					// 	},
+					// });
+				} else if (
+					e.data.type === 'markwhenState' ||
+					e.data.type === 'appState'
+				) {
+					this.updateVisualization(this.getMw()!);
+				}
+			}
+		});
 	}
 
 	activeFrame() {
