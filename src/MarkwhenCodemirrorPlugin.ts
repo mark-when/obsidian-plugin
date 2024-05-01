@@ -38,7 +38,6 @@ export class MarkwhenCodemirrorPlugin implements PluginValue {
 	markwhen = emptyTimeline();
 	view: EditorView;
 	worker = useParserWorker((mw) => {
-		console.log(mw);
 		this.markwhen = mw;
 		this.view.dispatch({
 			effects: parseResult.of(mw),
