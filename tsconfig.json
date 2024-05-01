@@ -12,6 +12,9 @@
     "isolatedModules": true,
     "strictNullChecks": true,
     "allowSyntheticDefaultImports": true,
+    "types": [
+      "vite/client"
+    ],
     "lib": [
       "DOM",
       "ES5",
