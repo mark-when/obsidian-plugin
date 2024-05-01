@@ -4,6 +4,7 @@ import {
 	addIcon,
 	MarkdownView,
 	TFile,
+	Platform,
 } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON_NAME } from '../assets/icon';
@@ -168,7 +169,7 @@ export class MarkwhenView extends MarkdownView {
 			'<path d="M 48 80 h 36" stroke="currentColor" stroke-width="8"/><path stroke="currentColor" stroke-width="8" d="M 66 14 a 8.48 8.48 90 0 1 12 12 L 28 76 l -16 4 l 4 -16 Z"/>'
 		);
 		const action = (viewType: ViewType) => async (evt: MouseEvent) => {
-			if (evt.metaKey) {
+			if (evt.metaKey || evt.ctrlKey) {
 				await this.split(viewType);
 			} else if (this.viewType !== viewType) {
 				await this.setViewType(viewType);
@@ -177,24 +178,32 @@ export class MarkwhenView extends MarkdownView {
 
 		this.addAction(
 			'calendar',
-			'Click to view calendar\n⌘+Click to open to the right',
+			`Click to view calendar\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('calendar')
 		);
 
 		this.addAction(
 			'markwhen',
-			'Click to view timeline\n⌘+Click to open to the right',
+			`Click to view timeline\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('timeline')
 		);
 		this.addAction(
 			'oneview',
-			'Click to view vertical timeline',
+			`Click to view vertical timeline\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('oneview')
 		);
 
 		this.addAction(
 			'pen-line',
-			'Click to edit text\n⌘+Click to open to the right',
+			`Click to edit text\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('text')
 		);
 		this.setViewType(this.viewType);
