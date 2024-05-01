@@ -14,8 +14,7 @@ const colorMapAndRangesFromMarkwhen = (timeline: any, colorIndex: number) => {
 		}
 		const headerDefinition =
 			r.content?.tag && timeline.header[')' + r.content.tag];
-		let tagColorDefintion: string | undefined;
-		tagColorDefintion =
+		const tagColorDefintion: string | undefined =
 			!!headerDefinition &&
 			((typeof headerDefinition === 'string' && headerDefinition) ||
 				(typeof headerDefinition === 'object' &&
@@ -45,7 +44,7 @@ export const useColors = (markwhen: any) => {
 	let colorIndex = 0;
 	const colorMap = {} as ColorMap;
 	for (const [path, timeline] of [['default', markwhen]] as [string, any][]) {
-		const [map, ranges, index] = colorMapAndRangesFromMarkwhen(
+		const [map, , index] = colorMapAndRangesFromMarkwhen(
 			timeline,
 			colorIndex
 		);

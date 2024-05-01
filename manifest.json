@@ -1,10 +1,10 @@
 {
 	"id": "markwhen",
 	"name": "Markwhen",
-	"version": "developer",
+	"version": "0.0.1",
 	"minAppVersion": "1.0.0",
-	"description": "Markwhen integration for Obsidian.md",
+	"description": "View and edit markwhen documents.",
 	"author": "Markwhen",
 	"authorUrl": "https://github.com/mark-when",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }

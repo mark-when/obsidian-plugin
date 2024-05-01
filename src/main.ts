@@ -3,7 +3,6 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
-	addIcon,
 	TFile,
 	TFolder,
 	normalizePath,
@@ -11,9 +10,8 @@ import {
 	ExtraButtonComponent,
 } from 'obsidian';
 
+import { MARKWHEN_ICON } from './icons';
 import { VIEW_TYPE_MARKWHEN, MarkwhenView } from './MarkwhenView';
-
-import { MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG } from '../assets/icon';
 
 interface MarkwhenPluginSettings {
 	folder: string;
@@ -29,13 +27,8 @@ export default class MarkwhenPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		addIcon(MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG); // https://github.com/mark-when/markwhen/issues/131
-		addIcon(
-			'oneview',
-			'<g stroke-width="11" transform="translate(0px, -5px) scale(1.1)"  stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">    <path d="M 45.826 24.996 l 37.494 0"></path>    <path d="M 37.494 49.992 l 29.162 0 "></path>    <path d="M 41.66 74.988 l 33.328 0"></path>    <path d=" M 20.83 24.996 l 0 49.992"></path></g>'
-		);
 		this.addRibbonIcon(
-			MARKWHEN_ICON_NAME, // icon id, built-in lucide or add your custom by `addIcon()`
+			MARKWHEN_ICON,
 			'Create new Markwhen file', // tooltip
 			() => {
 				//TODO: better UX dealing with ribbon icons
@@ -49,7 +42,10 @@ export default class MarkwhenPlugin extends Plugin {
 			}
 		);
 
-		this.registerView(VIEW_TYPE_MARKWHEN, (leaf) => new MarkwhenView(leaf));
+		this.registerView(
+			VIEW_TYPE_MARKWHEN,
+			(leaf) => new MarkwhenView(leaf, 'text', this)
+		);
 
 		this.registerExtensions(['mw'], VIEW_TYPE_MARKWHEN);
 
@@ -81,8 +77,7 @@ export default class MarkwhenPlugin extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 	}
 
-	// functions in file modules are taken from https://github.com/yuleicul/obsidian-ketcher
-
+	//Credits to https://github.com/yuleicul/obsidian-ketcher on file operations
 	async createAndOpenMWFile(
 		filename: string,
 		foldername?: string,
@@ -97,11 +92,10 @@ export default class MarkwhenPlugin extends Plugin {
 		foldername?: string,
 		initData?: string
 	): Promise<TFile> {
-		const folderPath = normalizePath(foldername || this.settings.folder); // normalizePath(foldername || this.settings.folder);
+		const folderPath = normalizePath(foldername || this.settings.folder);
 		await this.checkAndCreateFolder(folderPath);
 		const fname = normalizePath(`${folderPath}/${filename}`);
 		const file = await this.app.vault.create(fname, initData ?? '');
-
 		return file;
 	}
 
@@ -109,14 +103,9 @@ export default class MarkwhenPlugin extends Plugin {
 		const vault = this.app.vault;
 		folderPath = normalizePath(folderPath);
 		//https://github.com/zsviczian/obsidian-excalidraw-plugin/issues/658
-		//@ts-ignore
 		const folder = vault.getAbstractFileByPathInsensitive(folderPath);
-		if (folder && folder instanceof TFolder) {
-			return;
-		}
-		if (folder && folder instanceof TFile) {
-			console.log('folder already exists');
-		}
+		if (folder && folder instanceof TFolder) return;
+		if (folder && folder instanceof TFile) return; //File name corruption
 		await vault.createFolder(folderPath);
 	}
 }
@@ -154,5 +143,3 @@ class MarkwhenPluginSettingTab extends PluginSettingTab {
 			});
 	}
 }
-
-// TODO: toggle markdown/markwhen view & highlighting

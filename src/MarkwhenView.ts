@@ -1,12 +1,6 @@
-import {
-	WorkspaceLeaf,
-	EventRef,
-	addIcon,
-	MarkdownView,
-	TFile,
-} from 'obsidian';
+import { WorkspaceLeaf, MarkdownView, TFile, Platform } from 'obsidian';
 import MarkwhenPlugin from './main';
-import { MARKWHEN_ICON_NAME } from '../assets/icon';
+import { MARKWHEN_ICON } from './icons';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
 import { Timeline, dateRangeToString, toDateRange } from '@markwhen/parser';
 import { AppState, MarkwhenState } from '@markwhen/view-client';
@@ -18,22 +12,23 @@ import {
 	parseResult,
 } from './MarkwhenCodemirrorPlugin';
 
-type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
-
-import { join } from 'path';
+import { type ViewType, getTemplateURL } from './templates/templates';
 
 export class MarkwhenView extends MarkdownView {
-	plugin: MarkwhenPlugin;
-	vaultListener: EventRef;
-
+	readonly plugin: MarkwhenPlugin;
 	editorView: EditorView;
 	viewType!: ViewType;
 	views: Partial<{ [vt in ViewType]: HTMLIFrameElement }>;
 	codemirrorPlugin: ViewPlugin<MarkwhenCodemirrorPlugin>;
-	updateId: number = 0;
+	updateId = 0;
 
-	constructor(leaf: WorkspaceLeaf, viewType: ViewType = 'text') {
+	constructor(
+		leaf: WorkspaceLeaf,
+		viewType: ViewType = 'text',
+		plugin: MarkwhenPlugin
+	) {
 		super(leaf);
+		this.plugin = plugin;
 		this.viewType = viewType;
 		this.views = {};
 		for (const view of ['timeline', 'calendar', 'oneview'] as ViewType[]) {
@@ -54,20 +49,19 @@ export class MarkwhenView extends MarkdownView {
 		return root.createEl('iframe', {
 			attr: {
 				style: 'height: 100%; width: 100%',
-				src: this.srcForViewType(viewType),
+				src: getTemplateURL(viewType),
 			},
 		});
 	}
 
 	srcForViewType(vt: ViewType) {
+		const pluginDir =
+			this.plugin.manifest?.dir ??
+			[this.app.vault.configDir, 'plugins', this.plugin.manifest.id].join(
+				'/'
+			);
 		return this.app.vault.adapter.getResourcePath(
-			join(
-				this.app.vault.configDir,
-				'plugins',
-				'obsidian-markwhen',
-				'assets',
-				`${vt}.html`
-			)
+			[pluginDir, 'assets', `${vt}.html`].join('/')
 		);
 	}
 
@@ -76,7 +70,7 @@ export class MarkwhenView extends MarkdownView {
 	}
 
 	getIcon() {
-		return MARKWHEN_ICON_NAME;
+		return MARKWHEN_ICON;
 	}
 
 	getViewType() {
@@ -87,7 +81,7 @@ export class MarkwhenView extends MarkdownView {
 
 	async split(viewType: ViewType) {
 		const leaf = this.app.workspace.getLeaf('split');
-		await leaf.open(new MarkwhenView(leaf, viewType));
+		await leaf.open(new MarkwhenView(leaf, viewType, this.plugin));
 		await leaf.openFile(this.file!);
 		await leaf.setViewState({
 			type: VIEW_TYPE_MARKWHEN,
@@ -159,16 +153,9 @@ export class MarkwhenView extends MarkdownView {
 
 	async onOpen() {
 		super.onOpen();
-		addIcon(
-			'markwhen',
-			'<path fill="currentColor" d="M 87.175 87.175 H 52.8 C 49.0188 87.175 45.925 84.0813 45.925 80.3 S 49.0188 73.425 52.8 73.425 H 87.175 C 90.9563 73.425 94.05 76.5188 94.05 80.3 S 90.9563 87.175 87.175 87.175 Z M 80.3 59.675 H 32.175 C 28.3938 59.675 25.3 56.5813 25.3 52.8 S 28.3938 45.925 32.175 45.925 H 80.3 C 84.0813 45.925 87.175 49.0188 87.175 52.8 S 84.0813 59.675 80.3 59.675 Z M 18.425 32.175 H 18.425 C 14.6438 32.175 11.55 29.0813 11.55 25.3 S 14.6438 18.425 18.425 18.425 H 32.175 C 35.9563 18.425 39.05 21.5188 39.05 25.3 S 35.9563 32.175 32.175 32.175 Z"></path>'
-		);
-		addIcon(
-			'pen-line',
-			'<path d="M 48 80 h 36" stroke="currentColor" stroke-width="8"/><path stroke="currentColor" stroke-width="8" d="M 66 14 a 8.48 8.48 90 0 1 12 12 L 28 76 l -16 4 l 4 -16 Z"/>'
-		);
+
 		const action = (viewType: ViewType) => async (evt: MouseEvent) => {
-			if (evt.metaKey) {
+			if (evt.metaKey || evt.ctrlKey) {
 				await this.split(viewType);
 			} else if (this.viewType !== viewType) {
 				await this.setViewType(viewType);
@@ -177,26 +164,36 @@ export class MarkwhenView extends MarkdownView {
 
 		this.addAction(
 			'calendar',
-			'Click to view calendar\n⌘+Click to open to the right',
+			`Click to view calendar\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('calendar')
 		);
 
 		this.addAction(
-			'markwhen',
-			'Click to view timeline\n⌘+Click to open to the right',
+			MARKWHEN_ICON,
+			`Click to view timeline\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('timeline')
 		);
+
 		this.addAction(
 			'oneview',
-			'Click to view vertical timeline',
+			`Click to view vertical timeline\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('oneview')
 		);
 
 		this.addAction(
 			'pen-line',
-			'Click to edit text\n⌘+Click to open to the right',
+			`Click to edit text\n${
+				Platform.isMacOS ? '⌘' : 'Ctrl'
+			}+Click to open to the right`,
 			action('text')
 		);
+
 		this.setViewType(this.viewType);
 		this.registerDomEvent(window, 'message', async (e) => {
 			if (
@@ -242,14 +239,13 @@ export class MarkwhenView extends MarkdownView {
 			for (const vt of ['timeline', 'oneview', 'calendar']) {
 				this.views[vt as ViewType]?.removeClass('mw-active');
 			}
-			for (let i = 0; i < this.contentEl.children.length; i++) {
-				const el = this.contentEl.children.item(i);
+			Array.from(this.contentEl.children).forEach((el) => {
 				if (el?.nodeName === 'IFRAME') {
 					el.addClass('mw-hidden');
 				} else {
 					el?.removeClass('mw-hidden');
 				}
-			}
+			});
 		} else {
 			for (const vt of ['timeline', 'calendar', 'oneview']) {
 				if (vt === viewType) {
@@ -257,7 +253,7 @@ export class MarkwhenView extends MarkdownView {
 					if (frame) {
 						if (!frame.src) {
 							frame.setAttrs({
-								src: this.srcForViewType(vt),
+								src: getTemplateURL(vt),
 							});
 						}
 						frame.addClass('active');
@@ -310,5 +306,10 @@ export class MarkwhenView extends MarkdownView {
 			detailPath: undefined,
 			colorMap: mw ? useColors(mw) ?? {} : {},
 		};
+	}
+
+	//Avoid loading Markdown file in Markwhen view (action icons, favicons, etc.)
+	canAcceptExtension(extension: string) {
+		return extension === 'mw';
 	}
 }
