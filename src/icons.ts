@@ -10,5 +10,5 @@ addIcon(
 
 addIcon(
 	ONEVIEW_ICON,
-	'<g stroke-width="11" transform="translate(0px, -5px) scale(1.1)"  stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">    <path d="M 45.826 24.996 l 37.494 0"></path>    <path d="M 37.494 49.992 l 29.162 0 "></path>    <path d="M 41.66 74.988 l 33.328 0"></path>    <path d=" M 20.83 24.996 l 0 49.992"></path></g>'
+	'<g stroke-width="11" transform="matrix(1.1, 0, 0, 1.1, 0, -5)" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">    <path d="M 45.826 24.996 l 37.494 0"></path>    <path d="M 37.494 49.992 l 29.162 0 "></path>    <path d="M 41.66 74.988 l 33.328 0"></path>    <path d=" M 20.83 24.996 l 0 49.992"></path></g>'
 );
