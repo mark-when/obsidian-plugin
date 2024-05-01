@@ -3,7 +3,6 @@ import {
 	Plugin,
 	PluginSettingTab,
 	Setting,
-	addIcon,
 	TFile,
 	TFolder,
 	normalizePath,
@@ -11,9 +10,8 @@ import {
 	ExtraButtonComponent,
 } from 'obsidian';
 
+import { MARKWHEN_ICON } from './icons';
 import { VIEW_TYPE_MARKWHEN, MarkwhenView } from './MarkwhenView';
-
-import { MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG } from '../assets/icon';
 
 interface MarkwhenPluginSettings {
 	folder: string;
@@ -29,13 +27,8 @@ export default class MarkwhenPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
-		addIcon(MARKWHEN_ICON_NAME, MARKWHEN_ICON_SVG); // https://github.com/mark-when/markwhen/issues/131
-		addIcon(
-			'oneview',
-			'<g stroke-width="11" transform="translate(0px, -5px) scale(1.1)"  stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">    <path d="M 45.826 24.996 l 37.494 0"></path>    <path d="M 37.494 49.992 l 29.162 0 "></path>    <path d="M 41.66 74.988 l 33.328 0"></path>    <path d=" M 20.83 24.996 l 0 49.992"></path></g>'
-		);
 		this.addRibbonIcon(
-			MARKWHEN_ICON_NAME, // icon id, built-in lucide or add your custom by `addIcon()`
+			MARKWHEN_ICON,
 			'Create new Markwhen file', // tooltip
 			() => {
 				//TODO: better UX dealing with ribbon icons
@@ -154,5 +147,3 @@ class MarkwhenPluginSettingTab extends PluginSettingTab {
 			});
 	}
 }
-
-// TODO: toggle markdown/markwhen view & highlighting
