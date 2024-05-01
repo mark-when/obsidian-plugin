@@ -12,7 +12,7 @@ import {
 	parseResult,
 } from './MarkwhenCodemirrorPlugin';
 
-type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
+import { type ViewType, getTemplateURL } from './templates/templates';
 
 export class MarkwhenView extends MarkdownView {
 	readonly plugin: MarkwhenPlugin;
@@ -49,7 +49,7 @@ export class MarkwhenView extends MarkdownView {
 		return root.createEl('iframe', {
 			attr: {
 				style: 'height: 100%; width: 100%',
-				src: this.srcForViewType(viewType),
+				src: getTemplateURL(viewType),
 			},
 		});
 	}
@@ -253,7 +253,7 @@ export class MarkwhenView extends MarkdownView {
 					if (frame) {
 						if (!frame.src) {
 							frame.setAttrs({
-								src: this.srcForViewType(vt),
+								src: getTemplateURL(vt),
 							});
 						}
 						frame.addClass('active');
