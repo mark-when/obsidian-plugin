@@ -17,8 +17,8 @@ This plugin integrates [Markwhen](https://github.com/mark-when/markwhen/) into [
 
 ### Install the plugin manually
 
-1. Go to the repo's latest [release page](https://github.com/mark-when/obsidian-plugin/releases/latest), and download `markwhen.zip`.
-2. Copy unzipped files to your local path `[your vault]/.obsidian/plugins/markwhen/`.
+1. Go to the repo's latest [release page](https://github.com/mark-when/obsidian-plugin/releases/latest), and download `main.js`, `manifest.json` and `styles.css` (or the zip file).
+2. Copy these files to your local path `[your vault]/.obsidian/plugins/markwhen/`.
 3. Relaunch Obsidian, or refresh the plugin list, you will see this plugin.
 4. In the plugin list, enable `Markwhen` and enjoy!
 
