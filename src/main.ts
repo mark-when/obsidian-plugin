@@ -77,8 +77,7 @@ export default class MarkwhenPlugin extends Plugin {
 		this.app.workspace.revealLeaf(leaf);
 	}
 
-	// functions in file modules are taken from https://github.com/yuleicul/obsidian-ketcher
-
+	//Credits to https://github.com/yuleicul/obsidian-ketcher on file operations
 	async createAndOpenMWFile(
 		filename: string,
 		foldername?: string,
@@ -93,11 +92,10 @@ export default class MarkwhenPlugin extends Plugin {
 		foldername?: string,
 		initData?: string
 	): Promise<TFile> {
-		const folderPath = normalizePath(foldername || this.settings.folder); // normalizePath(foldername || this.settings.folder);
+		const folderPath = normalizePath(foldername || this.settings.folder);
 		await this.checkAndCreateFolder(folderPath);
 		const fname = normalizePath(`${folderPath}/${filename}`);
 		const file = await this.app.vault.create(fname, initData ?? '');
-
 		return file;
 	}
 
@@ -105,14 +103,9 @@ export default class MarkwhenPlugin extends Plugin {
 		const vault = this.app.vault;
 		folderPath = normalizePath(folderPath);
 		//https://github.com/zsviczian/obsidian-excalidraw-plugin/issues/658
-		//@ts-ignore
 		const folder = vault.getAbstractFileByPathInsensitive(folderPath);
-		if (folder && folder instanceof TFolder) {
-			return;
-		}
-		if (folder && folder instanceof TFile) {
-			console.log('folder already exists');
-		}
+		if (folder && folder instanceof TFolder) return;
+		if (folder && folder instanceof TFile) return; //File name corruption
 		await vault.createFolder(folderPath);
 	}
 }
