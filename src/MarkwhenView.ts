@@ -1,10 +1,4 @@
-import {
-	WorkspaceLeaf,
-	EventRef,
-	MarkdownView,
-	TFile,
-	Platform,
-} from 'obsidian';
+import { WorkspaceLeaf, MarkdownView, TFile, Platform } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON } from './icons';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
@@ -19,8 +13,6 @@ import {
 } from './MarkwhenCodemirrorPlugin';
 
 type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
-
-import { join } from 'path';
 
 export class MarkwhenView extends MarkdownView {
 	editorView: EditorView;
@@ -61,14 +53,13 @@ export class MarkwhenView extends MarkdownView {
 	}
 
 	srcForViewType(vt: ViewType) {
+		const pluginDir =
+			this.plugin.manifest?.dir ??
+			[this.app.vault.configDir, 'plugins', this.plugin.manifest.id].join(
+				'/'
+			);
 		return this.app.vault.adapter.getResourcePath(
-			join(
-				this.app.vault.configDir,
-				'plugins',
-				this.plugin.manifest.id,
-				'assets',
-				`${vt}.html`
-			)
+			[pluginDir, 'assets', `${vt}.html`].join('/')
 		);
 	}
 
