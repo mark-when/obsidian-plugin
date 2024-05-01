@@ -29,21 +29,21 @@ export const HUMAN_COLORS = [
 export function hexToRgb(hex: string): string | undefined {
 	hex = hex.replace('#', '').replace(')', '');
 	const isShortHex = hex.length === 3;
-	var r = parseInt(
+	const r = parseInt(
 		isShortHex ? hex.slice(0, 1).repeat(2) : hex.slice(0, 2),
 		16
 	);
 	if (isNaN(r)) {
 		return undefined;
 	}
-	var g = parseInt(
+	const g = parseInt(
 		isShortHex ? hex.slice(1, 2).repeat(2) : hex.slice(2, 4),
 		16
 	);
 	if (isNaN(g)) {
 		return undefined;
 	}
-	var b = parseInt(
+	const b = parseInt(
 		isShortHex ? hex.slice(2, 3).repeat(2) : hex.slice(4, 6),
 		16
 	);
@@ -54,7 +54,7 @@ export function hexToRgb(hex: string): string | undefined {
 }
 
 function componentToHex(c: number) {
-	var hex = c.toString(16);
+	const hex = c.toString(16);
 	return hex.length == 1 ? '0' + hex : hex;
 }
 

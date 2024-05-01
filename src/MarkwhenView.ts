@@ -20,7 +20,7 @@ export class MarkwhenView extends MarkdownView {
 	viewType!: ViewType;
 	views: Partial<{ [vt in ViewType]: HTMLIFrameElement }>;
 	codemirrorPlugin: ViewPlugin<MarkwhenCodemirrorPlugin>;
-	updateId: number = 0;
+	updateId = 0;
 
 	constructor(
 		leaf: WorkspaceLeaf,
