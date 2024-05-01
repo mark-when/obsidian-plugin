@@ -15,6 +15,7 @@ import {
 type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
 
 export class MarkwhenView extends MarkdownView {
+	readonly plugin: MarkwhenPlugin;
 	editorView: EditorView;
 	viewType!: ViewType;
 	views: Partial<{ [vt in ViewType]: HTMLIFrameElement }>;
@@ -24,9 +25,10 @@ export class MarkwhenView extends MarkdownView {
 	constructor(
 		leaf: WorkspaceLeaf,
 		viewType: ViewType = 'text',
-		readonly plugin: MarkwhenPlugin
+		plugin: MarkwhenPlugin
 	) {
 		super(leaf);
+		this.plugin = plugin;
 		this.viewType = viewType;
 		this.views = {};
 		for (const view of ['timeline', 'calendar', 'oneview'] as ViewType[]) {
@@ -175,6 +177,7 @@ export class MarkwhenView extends MarkdownView {
 			}+Click to open to the right`,
 			action('timeline')
 		);
+
 		this.addAction(
 			'oneview',
 			`Click to view vertical timeline\n${
@@ -190,6 +193,7 @@ export class MarkwhenView extends MarkdownView {
 			}+Click to open to the right`,
 			action('text')
 		);
+
 		this.setViewType(this.viewType);
 		this.registerDomEvent(window, 'message', async (e) => {
 			if (
@@ -235,14 +239,13 @@ export class MarkwhenView extends MarkdownView {
 			for (const vt of ['timeline', 'oneview', 'calendar']) {
 				this.views[vt as ViewType]?.removeClass('mw-active');
 			}
-			for (let i = 0; i < this.contentEl.children.length; i++) {
-				const el = this.contentEl.children.item(i);
+			Array.from(this.contentEl.children).forEach((el) => {
 				if (el?.nodeName === 'IFRAME') {
 					el.addClass('mw-hidden');
 				} else {
 					el?.removeClass('mw-hidden');
 				}
-			}
+			});
 		} else {
 			for (const vt of ['timeline', 'calendar', 'oneview']) {
 				if (vt === viewType) {
@@ -303,5 +306,10 @@ export class MarkwhenView extends MarkdownView {
 			detailPath: undefined,
 			colorMap: mw ? useColors(mw) ?? {} : {},
 		};
+	}
+
+	//Avoid loading Markdown file in Markwhen view (action icons, favicons, etc.)
+	canAcceptExtension(extension: string) {
+		return extension === 'mw';
 	}
 }
