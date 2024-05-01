@@ -24,18 +24,17 @@ This plugin integrates [Markwhen](https://github.com/mark-when/markwhen/) into [
 
 ### Install via BRAT
 
-:construction:
+Register `https://github.com/mark-when/obsidian-plugin` in [BRAT](https://github.com/TfTHacker/obsidian42-brat) to receive upcoming releases automatically before we got reviewed from Obsidian team!
 
 ## Development
 
 Ensure you first have Obsidian installed, and set up a development vault.
 
-For developers on Linux / MacOS, if the path to your vault is something other than `~/Documents/Obsidian Vault`, update `copyAssets.sh` to point to your vault's location.
+You can download and enable the [Hot-Reload](https://github.com/pjeby/hot-reload) plugin in the dev vault to experience a smooth debugging workflow. Every time `main.js`, `manifest.json` or `styles.css` updates, it will trigger an auto-reload.
 
-For developers on Windows, since there's no watch command out-of-the-box, you can place the repo right in the dev vault config directory (i.e. `[your vault]/.obsidian/plugins/markwhen/`), and set the `outDir` to `./` in `vite.config.ts` (vite complains about this).
+### Linux / MacOS developers
 
-> [!Note]
-> The plugin id in the manifest is `markwhen`, indicating users will find their plugin under the `.obsidian/plugins/markwhen` directory if they install this plugin from official Obsidian distribution.
+If the path to your vault is something other than `~/Documents/Obsidian Vault`, update `copyAssets.sh` to point to your vault's location.
 
 ```sh
 git clone git@github.com:mark-when/obsidian-plugin.git
@@ -44,4 +43,17 @@ npm i
 npm run vite
 ```
 
-You can download and enable the [Hot-Reload](https://github.com/pjeby/hot-reload) plugin in the dev vault to experience a smooth debugging workflow. Every time `main.js`, `manifest.json` or `styles.css` updates, it will trigger an auto-reload.
+### Windows developers
+
+Since there's no watch command out-of-the-box, you can place the repo right in the dev vault config directory (i.e. `[your vault]/.obsidian/plugins/markwhen/`), and set the `outDir` to `./` in `vite.config.ts` (vite complains about this).
+
+```cmd
+cd your-dev-vault/.obsidian/plugins
+git clone git@github.com:mark-when/obsidian-plugin.git markwhen
+cd markwhen
+npm i
+npm run vite
+```
+
+> [!Note]
+> The plugin id in the manifest is `markwhen`, indicating users will find their plugin under the `.obsidian/plugins/markwhen` directory if they install this plugin from official Obsidian distribution.
