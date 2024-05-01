@@ -42,7 +42,10 @@ export default class MarkwhenPlugin extends Plugin {
 			}
 		);
 
-		this.registerView(VIEW_TYPE_MARKWHEN, (leaf) => new MarkwhenView(leaf));
+		this.registerView(
+			VIEW_TYPE_MARKWHEN,
+			(leaf) => new MarkwhenView(leaf, 'text', this)
+		);
 
 		this.registerExtensions(['mw'], VIEW_TYPE_MARKWHEN);
 

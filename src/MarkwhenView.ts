@@ -23,16 +23,17 @@ type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
 import { join } from 'path';
 
 export class MarkwhenView extends MarkdownView {
-	plugin: MarkwhenPlugin;
-	vaultListener: EventRef;
-
 	editorView: EditorView;
 	viewType!: ViewType;
 	views: Partial<{ [vt in ViewType]: HTMLIFrameElement }>;
 	codemirrorPlugin: ViewPlugin<MarkwhenCodemirrorPlugin>;
 	updateId: number = 0;
 
-	constructor(leaf: WorkspaceLeaf, viewType: ViewType = 'text') {
+	constructor(
+		leaf: WorkspaceLeaf,
+		viewType: ViewType = 'text',
+		readonly plugin: MarkwhenPlugin
+	) {
 		super(leaf);
 		this.viewType = viewType;
 		this.views = {};
@@ -87,7 +88,7 @@ export class MarkwhenView extends MarkdownView {
 
 	async split(viewType: ViewType) {
 		const leaf = this.app.workspace.getLeaf('split');
-		await leaf.open(new MarkwhenView(leaf, viewType));
+		await leaf.open(new MarkwhenView(leaf, viewType, this.plugin));
 		await leaf.openFile(this.file!);
 		await leaf.setViewState({
 			type: VIEW_TYPE_MARKWHEN,
