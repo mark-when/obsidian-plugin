@@ -219,6 +219,13 @@ export class MarkwhenView extends MarkdownView {
 		}
 	}
 
+	onload() {
+		this.plugin.app.workspace.onLayoutReady(() => {
+			this.contentEl.addClass('markwhen-view');
+		});
+		super.onload();
+	}
+
 	async setViewType(viewType?: ViewType) {
 		if (!viewType) {
 			return;

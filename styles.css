@@ -7,7 +7,7 @@ If your plugin does not need CSS, delete this file.
 
 */
 
-.workspace-leaf-content .view-content {
+.workspace-leaf-content .markwhen-view {
   padding: 0;
   overflow: hidden;
 }
