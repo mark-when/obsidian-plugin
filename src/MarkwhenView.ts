@@ -54,17 +54,6 @@ export class MarkwhenView extends MarkdownView {
 		});
 	}
 
-	srcForViewType(vt: ViewType) {
-		const pluginDir =
-			this.plugin.manifest?.dir ??
-			[this.app.vault.configDir, 'plugins', this.plugin.manifest.id].join(
-				'/'
-			);
-		return this.app.vault.adapter.getResourcePath(
-			[pluginDir, 'assets', `${vt}.html`].join('/')
-		);
-	}
-
 	getDisplayText() {
 		return this.file?.name ?? 'Markwhen';
 	}
