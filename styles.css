@@ -18,10 +18,6 @@ If your plugin does not need CSS, delete this file.
   margin-right: auto;
 }
 
-.cm-content {
-  padding-bottom: 455px;
-}
-
 .mw-hidden {
   display: none !important;
 }
