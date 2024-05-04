@@ -12,7 +12,7 @@ import {
 	parseResult,
 } from './MarkwhenCodemirrorPlugin';
 
-import { type ViewType, getTemplateURL } from './templates/templates';
+import { type ViewType, getTemplateURL } from './templates';
 
 export class MarkwhenView extends MarkdownView {
 	readonly plugin: MarkwhenPlugin;
@@ -174,6 +174,16 @@ export class MarkwhenView extends MarkdownView {
 			}+Click to open to the right`,
 			action('oneview')
 		);
+
+		// Hook for resume view
+
+		// this.addAction(
+		// 	'file-text',
+		// 	`Click to view resume\n${
+		// 		Platform.isMacOS ? '⌘' : 'Ctrl'
+		// 	}+Click to open to the right`,
+		// 	action('resume')
+		// );
 
 		this.addAction(
 			'pen-line',
