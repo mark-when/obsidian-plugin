@@ -7,8 +7,8 @@
 This plugin integrates [Markwhen](https://github.com/mark-when/markwhen/) into [Obsidian.md](https://obsidian.md/). You can use markwhen syntax to create timelines.
 
 > [!Note]  
-> Latest release: 0.0.1  
-> Document version: 0.0.1
+> Latest release: 0.0.2  
+> Document version: 0.0.2
 
 ## Installation
 
