@@ -7,7 +7,7 @@ If your plugin does not need CSS, delete this file.
 
 */
 
-.workspace-leaf-content .view-content {
+.workspace-leaf-content .markwhen-view {
   padding: 0;
   overflow: hidden;
 }
@@ -16,10 +16,6 @@ If your plugin does not need CSS, delete this file.
   max-width: var(--file-line-width);
   margin-left: auto;
   margin-right: auto;
-}
-
-.cm-content {
-  padding-bottom: 455px;
 }
 
 .mw-hidden {

@@ -12,7 +12,7 @@ import {
 	parseResult,
 } from './MarkwhenCodemirrorPlugin';
 
-import { type ViewType, getTemplateURL } from './templates/templates';
+import { type ViewType, getTemplateURL } from './templates';
 
 export class MarkwhenView extends MarkdownView {
 	readonly plugin: MarkwhenPlugin;
@@ -52,17 +52,6 @@ export class MarkwhenView extends MarkdownView {
 				src: getTemplateURL(viewType),
 			},
 		});
-	}
-
-	srcForViewType(vt: ViewType) {
-		const pluginDir =
-			this.plugin.manifest?.dir ??
-			[this.app.vault.configDir, 'plugins', this.plugin.manifest.id].join(
-				'/'
-			);
-		return this.app.vault.adapter.getResourcePath(
-			[pluginDir, 'assets', `${vt}.html`].join('/')
-		);
 	}
 
 	getDisplayText() {
@@ -186,6 +175,16 @@ export class MarkwhenView extends MarkdownView {
 			action('oneview')
 		);
 
+		// Hook for resume view
+
+		// this.addAction(
+		// 	'file-text',
+		// 	`Click to view resume\n${
+		// 		Platform.isMacOS ? '⌘' : 'Ctrl'
+		// 	}+Click to open to the right`,
+		// 	action('resume')
+		// );
+
 		this.addAction(
 			'pen-line',
 			`Click to edit text\n${
@@ -228,6 +227,13 @@ export class MarkwhenView extends MarkdownView {
 				return el as HTMLIFrameElement;
 			}
 		}
+	}
+
+	onload() {
+		this.plugin.app.workspace.onLayoutReady(() => {
+			this.contentEl.addClass('markwhen-view');
+		});
+		super.onload();
 	}
 
 	async setViewType(viewType?: ViewType) {
