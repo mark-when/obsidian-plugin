@@ -3,7 +3,7 @@
 	"name": "Markwhen",
 	"version": "0.0.1",
 	"minAppVersion": "1.0.0",
-	"description": "View and edit markwhen documents.",
+	"description": "Create timelines, gantt charts, calendars, and more using markwhen.",
 	"author": "Markwhen",
 	"authorUrl": "https://github.com/mark-when",
 	"isDesktopOnly": true
