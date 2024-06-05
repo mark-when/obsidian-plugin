@@ -7,13 +7,26 @@
 This plugin integrates [Markwhen](https://github.com/mark-when/markwhen/) into [Obsidian.md](https://obsidian.md/). You can use markwhen syntax to create timelines.
 
 > [!Note]  
-> Latest release: 0.0.1  
-> Document version: 0.0.1
+> Latest release: 0.0.2  
+> Document version: 0.0.2
 
 ## Installation
 
 > [!Note]  
 > Make sure that you are not in the **Restricted Mode**.
+
+### Install from official plugin distribution
+
+1. In Obsidian, open **Settings**.
+2. Under **Community plugins**, click **Browse**.
+3. Search for "Markwhen" and then select it.
+4. Select **Install**, then enable it.
+
+You can also find and install Markwhen plugin here: <https://obsidian.md/plugins?search=Markwhen>
+
+### Install via BRAT
+
+Register `https://github.com/mark-when/obsidian-plugin` in [BRAT](https://github.com/TfTHacker/obsidian42-brat) to receive upcoming releases automatically before we got reviewed from Obsidian team!
 
 ### Install the plugin manually
 
@@ -21,10 +34,6 @@ This plugin integrates [Markwhen](https://github.com/mark-when/markwhen/) into [
 2. Copy these files to your local path `[your vault]/.obsidian/plugins/markwhen/`.
 3. Relaunch Obsidian, or refresh the plugin list, you will see this plugin.
 4. In the plugin list, enable `Markwhen` and enjoy!
-
-### Install via BRAT
-
-Register `https://github.com/mark-when/obsidian-plugin` in [BRAT](https://github.com/TfTHacker/obsidian42-brat) to receive upcoming releases automatically before we got reviewed from Obsidian team!
 
 ## Development
 
