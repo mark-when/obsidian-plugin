@@ -10,8 +10,12 @@ export const useParserWorker = (parsed: (mw: Timeline) => void) => {
 	const worker = new parseWorker();
 
 	worker.onmessage = (message: MessageEvent<any>) => {
-		const { timelines: fromWorker } = message.data;
-		parsed(fromWorker[0]);
+		const { timelines: fromWorker, error } = message.data;
+		if (!error) {
+			parsed(fromWorker[0]);
+		} else {
+      console.log(error)
+    }
 		if (queuedString !== parsingString) {
 			parsingString = queuedString;
 			worker.postMessage({ rawTimelineString: queuedString });

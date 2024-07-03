@@ -2,7 +2,7 @@ import { WorkspaceLeaf, MarkdownView, TFile, Platform } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON } from './icons';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
-import { Timeline, dateRangeToString, toDateRange } from '@markwhen/parser';
+import { Event, Node, Timeline, get, toDateRange } from '@markwhen/parser';
 import { AppState, MarkwhenState } from '@markwhen/view-client';
 import { useColors } from './utils/colorMap';
 import { EditorView, ViewPlugin } from '@codemirror/view';
@@ -13,6 +13,8 @@ import {
 } from './MarkwhenCodemirrorPlugin';
 
 import { type ViewType, getTemplateURL } from './templates';
+import { editEventDateRange } from './utils/dateTextInterpolation';
+import { dateRangeToString } from './utils/dateTimeUtilities';
 
 export class MarkwhenView extends MarkdownView {
 	readonly plugin: MarkwhenPlugin;
@@ -200,21 +202,53 @@ export class MarkwhenView extends MarkdownView {
 				e.data.request
 			) {
 				if (e.data.type === 'newEvent') {
+					const { dateRangeIso, granularity } = e.data.params;
 					const newEventString = `\n${dateRangeToString(
-						toDateRange(e.data.params.dateRangeIso)
+						toDateRange(dateRangeIso),
+						granularity
+							? granularity === 'instant'
+								? 'minute'
+								: granularity
+							: 'day'
 					)}: new event`;
-					// this.getCodeMirror()?.dispatch({
-					// 	changes: {
-					// 		from: this.data.length,
-					// 		to: this.data.length,
-					// 		insert: newEventString,
-					// 	},
-					// });
+					this.getCodeMirror()?.dispatch({
+						changes: {
+							from: this.data.length,
+							to: this.data.length,
+							insert: newEventString,
+						},
+					});
 				} else if (
 					e.data.type === 'markwhenState' ||
 					e.data.type === 'appState'
 				) {
 					this.updateVisualization(this.getMw()!);
+				} else if (e.data.type === 'editEventDateRange') {
+					const events = this.getMw()?.events;
+					if (!events) {
+						return;
+					}
+					const { path, range, scale, preferredInterpolationFormat } =
+						e.data.params;
+					const event = get(events, path) as Node<Event>;
+					if (!event) {
+						return;
+					}
+					const newText = editEventDateRange(
+						event.value,
+						toDateRange(range),
+						scale,
+						preferredInterpolationFormat
+					);
+					if (newText) {
+						this.getCodeMirror()?.dispatch({
+							changes: {
+								from: event.value.dateRangeInText.from,
+								to: event.value.dateRangeInText.to,
+								insert: newText,
+							},
+						});
+					}
 				}
 			}
 		});
