@@ -1,6 +1,6 @@
 {
 	"name": "markwhen",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Markwhen integration for Obsidian.md",
 	"main": "main.js",
 	"type": "module",
