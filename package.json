@@ -11,7 +11,14 @@
 		"dev": "vite build --watch & watch ./copyAssets.sh",
 		"vite": "vite build --watch & watch ./copyAssets.sh"
 	},
-	"keywords": [],
+	"keywords": [
+		"timeline",
+		"gantt",
+		"gantt chart",
+		"calendar",
+		"markdown",
+    "project planning"
+	],
 	"author": "Rob Koch",
 	"license": "MIT",
 	"devDependencies": {
