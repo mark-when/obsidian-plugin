@@ -13,6 +13,7 @@ import {
 } from './MarkwhenCodemirrorPlugin';
 
 import { type ViewType, getTemplateURL } from './templates';
+import { editEventDateRange } from './utils/dateTextInterpolation';
 
 export class MarkwhenView extends MarkdownView {
 	readonly plugin: MarkwhenPlugin;
@@ -203,18 +204,26 @@ export class MarkwhenView extends MarkdownView {
 					const newEventString = `\n${dateRangeToString(
 						toDateRange(e.data.params.dateRangeIso)
 					)}: new event`;
-					// this.getCodeMirror()?.dispatch({
-					// 	changes: {
-					// 		from: this.data.length,
-					// 		to: this.data.length,
-					// 		insert: newEventString,
-					// 	},
-					// });
+					this.getCodeMirror()?.dispatch({
+						changes: {
+							from: this.data.length,
+							to: this.data.length,
+							insert: newEventString,
+						},
+					});
 				} else if (
 					e.data.type === 'markwhenState' ||
 					e.data.type === 'appState'
 				) {
 					this.updateVisualization(this.getMw()!);
+				} else if (e.data.type === 'editEventDateRange') {
+					const {
+						path,
+						dateRangeIso,
+						scale,
+						preferredInterpolationFormat,
+					} = e.data.params;
+          const newText = editEventDateRange()
 				}
 			}
 		});
