@@ -1,4 +1,4 @@
-import { WorkspaceLeaf, MarkdownView, TFile, Platform } from 'obsidian';
+import { Menu, WorkspaceLeaf, MarkdownView, TFile, Platform, TAbstractFile } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON } from './icons';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
@@ -268,6 +268,102 @@ export class MarkwhenView extends MarkdownView {
 			this.contentEl.addClass('markwhen-view');
 		});
 		super.onload();
+
+		const action= (viewType: ViewType) => async (evt: MouseEvent) => {
+			if (evt.metaKey || evt.ctrlKey) {
+				await this.split(viewType);
+			} else if (this.viewType !== viewType) {
+				await this.setViewType(viewType);
+			}
+		};
+		this.registerEvent(this.app.workspace.on('file-menu', (menu, file: TAbstractFile) => {
+            // Check if the submenu should be displayed
+            if (this.plugin.settings.actionToContextSettingtoggle) {
+			/*
+				let submenuOpen = false;
+				let submenu: Menu | null = null;
+				const mainMenuItem = menu.addItem((item) => {
+					item.setTitle('-Markwhen'); // Main menu item title
+					item.setIcon(MARKWHEN_ICON); // Main item icon
+					item.onClick((evt: MouseEvent) => drawmenu()(evt));
+				});
+				const drawmenu = () => async (evt: MouseEvent) => {
+					if (!submenuOpen) {
+						submenuOpen = true;
+						submenu = new Menu();
+						submenu.addItem((item) => {
+							item.setTitle('Edit Text');
+							item.setIcon('pen-line');
+							item.onClick((evt: MouseEvent) => handleAction('text')(evt));
+						});
+
+						submenu.addItem((item) => {
+							item.setTitle('View Calendar');
+							item.setIcon('calendar');
+							item.onClick((evt: MouseEvent) => handleAction('calendar')(evt));
+						});
+
+						submenu.addItem((item) => {
+							item.setTitle('View Timeline');
+							item.setIcon(MARKWHEN_ICON); // Assuming MARKWHEN_ICON is defined
+							item.onClick((evt: MouseEvent) => handleAction('timeline')(evt));
+						});
+
+						submenu.addItem((item) => {
+							item.setTitle('View Vertical Timeline');
+							item.setIcon('oneview'); // Assuming MARKWHEN_ICON is defined
+							item.onClick((evt: MouseEvent) => handleAction('oneview')(evt));
+						});
+
+					submenu.showAtPosition({ x: evt.x, y: evt.y });
+					} else {
+						submenu?.hide();
+                        submenuOpen = false;
+					}
+				};*/ //this draws submenu but closes main menu. Maybe override main menu drawing and custom expose the X and Y coords, or hook contextmenu ??
+
+                // Add a submenu item for the plugin
+                const pluginSubMenu = menu.addItem((item) => {
+                    item.setTitle('Markwhen'); // Submenu title
+					item.setIcon(MARKWHEN_ICON); // Main item icon
+				});
+
+                // Add custom actions under the submenu
+                pluginSubMenu.addItem((item) => {
+                    item.setTitle('Edit Text');
+                    item.setIcon('pen-line');
+                    item.onClick((evt: MouseEvent) => handleAction('text')(evt));
+                });
+
+                pluginSubMenu.addItem((item) => {
+                    item.setTitle('View Calendar');
+                    item.setIcon('calendar');
+                    item.onClick((evt: MouseEvent) => handleAction('calendar')(evt));
+                });
+
+				pluginSubMenu.addItem((item) => {
+                    item.setTitle('View Timeline');
+                    item.setIcon(MARKWHEN_ICON); // Assuming MARKWHEN_ICON is defined
+                    item.onClick((evt: MouseEvent) => handleAction('timeline')(evt));
+                });
+
+				pluginSubMenu.addItem((item) => {
+                    item.setTitle('View Vertical Timeline');
+                    item.setIcon('oneview'); // Assuming MARKWHEN_ICON is defined
+                    item.onClick((evt: MouseEvent) => handleAction('oneview')(evt));
+                });
+				const handleAction = (viewType: ViewType) => async (evt: MouseEvent) => {
+					if (file instanceof TFile) {
+						await this.app.workspace.getLeaf().openFile(file);
+						await action(viewType)(evt);
+					} else {
+						console.error("Selected item is not a file.");
+					}
+				};
+
+                // Add more actions as needed
+            }
+        }));
 	}
 
 	async setViewType(viewType?: ViewType) {
