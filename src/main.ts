@@ -1,17 +1,17 @@
 import {
 	App,
+	ExtraButtonComponent,
+	normalizePath,
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	TextComponent,
 	TFile,
 	TFolder,
-	normalizePath,
-	TextComponent,
-	ExtraButtonComponent,
 } from 'obsidian';
 
 import { MARKWHEN_ICON } from './icons';
-import { VIEW_TYPE_MARKWHEN, MarkwhenView } from './MarkwhenView';
+import { MarkwhenView, VIEW_TYPE_MARKWHEN } from './MarkwhenView';
 
 interface MarkwhenPluginSettings {
 	folder: string;
@@ -26,6 +26,14 @@ export default class MarkwhenPlugin extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
+
+		this.addCommand({
+			id: 'print-greeting-to-console',
+			name: 'Print greeting to console',
+			callback: () => {
+				console.log('Hey, you!');
+			},
+		});
 
 		this.addRibbonIcon(
 			MARKWHEN_ICON,
