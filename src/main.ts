@@ -12,6 +12,7 @@ import {
 
 import { MARKWHEN_ICON } from './icons';
 import { MarkwhenView, VIEW_TYPE_MARKWHEN } from './MarkwhenView';
+import { getDefaultFileName } from './utils/fileUtils';
 
 interface MarkwhenPluginSettings {
 	folder: string;
@@ -31,13 +32,7 @@ export default class MarkwhenPlugin extends Plugin {
 			id: 'markwhen-new-file',
 			name: 'Create new Markwhen File',
 			callback: () => {
-				this.createAndOpenMWFile(
-					`Markwhen ${new Date()
-						.toLocaleString('en-US', { hour12: false })
-						.replace(/\//g, '-')
-						.replace(/:/g, '.')
-						.replace(/,/, '')}.mw` // improve this
-				);
+				this.createAndOpenMWFile(getDefaultFileName());
 			},
 		});
 
@@ -46,13 +41,7 @@ export default class MarkwhenPlugin extends Plugin {
 			'Create new Markwhen file', // tooltip
 			() => {
 				//TODO: better UX dealing with ribbon icons
-				this.createAndOpenMWFile(
-					`Markwhen ${new Date()
-						.toLocaleString('en-US', { hour12: false })
-						.replace(/\//g, '-')
-						.replace(/:/g, '.')
-						.replace(/,/, '')}.mw` // improve this
-				);
+				this.createAndOpenMWFile(getDefaultFileName());
 			}
 		);
 
