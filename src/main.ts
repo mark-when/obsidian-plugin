@@ -28,10 +28,16 @@ export default class MarkwhenPlugin extends Plugin {
 		await this.loadSettings();
 
 		this.addCommand({
-			id: 'print-greeting-to-console',
-			name: 'Print greeting to console',
+			id: 'markwhen-new-file',
+			name: 'Create new Markwhen File',
 			callback: () => {
-				console.log('Hey, you!');
+				this.createAndOpenMWFile(
+					`Markwhen ${new Date()
+						.toLocaleString('en-US', { hour12: false })
+						.replace(/\//g, '-')
+						.replace(/:/g, '.')
+						.replace(/,/, '')}.mw` // improve this
+				);
 			},
 		});
 
