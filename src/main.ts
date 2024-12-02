@@ -48,7 +48,7 @@ export default class MarkwhenPlugin extends Plugin {
 
 		this.addCommand({
 			id: 'markwhen-open-oneview-view',
-			name: 'Open oneview view',
+			name: 'Open vertical timeline view',
 			callback: async () => {
 				this.openViewFromCurrent('oneview');
 			},
