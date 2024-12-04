@@ -1,17 +1,20 @@
 import {
 	App,
+	ExtraButtonComponent,
+	normalizePath,
+	Notice,
 	Plugin,
 	PluginSettingTab,
 	Setting,
+	TextComponent,
 	TFile,
 	TFolder,
-	normalizePath,
-	TextComponent,
-	ExtraButtonComponent,
 } from 'obsidian';
 
 import { MARKWHEN_ICON } from './icons';
-import { VIEW_TYPE_MARKWHEN, MarkwhenView } from './MarkwhenView';
+import { MarkwhenView, VIEW_TYPE_MARKWHEN } from './MarkwhenView';
+import { getDefaultFileName } from './utils/fileUtils';
+import { ViewType } from './templates';
 
 interface MarkwhenPluginSettings {
 	folder: string;
@@ -27,18 +30,52 @@ export default class MarkwhenPlugin extends Plugin {
 	async onload() {
 		await this.loadSettings();
 
+		this.addCommand({
+			id: 'markwhen-new-file',
+			name: 'Create new Markwhen File',
+			callback: () => {
+				this.createAndOpenMWFile(getDefaultFileName());
+			},
+		});
+
+		this.addCommand({
+			id: 'markwhen-open-text-view',
+			name: 'Open text view',
+			callback: async () => {
+				this.openViewFromCurrent('text');
+			},
+		});
+
+		this.addCommand({
+			id: 'markwhen-open-oneview-view',
+			name: 'Open vertical timeline view',
+			callback: async () => {
+				this.openViewFromCurrent('oneview');
+			},
+		});
+
+		this.addCommand({
+			id: 'markwhen-open-timeline-view',
+			name: 'Open timeline view',
+			callback: async () => {
+				this.openViewFromCurrent('timeline');
+			},
+		});
+
+		this.addCommand({
+			id: 'markwhen-open-calendar-view',
+			name: 'Open calendar view',
+			callback: async () => {
+				this.openViewFromCurrent('calendar');
+			},
+		});
+
 		this.addRibbonIcon(
 			MARKWHEN_ICON,
 			'Create new Markwhen file', // tooltip
 			() => {
 				//TODO: better UX dealing with ribbon icons
-				this.createAndOpenMWFile(
-					`Markwhen ${new Date()
-						.toLocaleString('en-US', { hour12: false })
-						.replace(/\//g, '-')
-						.replace(/:/g, '.')
-						.replace(/,/, '')}.mw` // improve this
-				);
+				this.createAndOpenMWFile(getDefaultFileName());
 			}
 		);
 
@@ -53,6 +90,22 @@ export default class MarkwhenPlugin extends Plugin {
 	}
 
 	onunload() {}
+
+	async openViewFromCurrent(viewType: ViewType) {
+		const currentFile = this.app.workspace.getActiveFile();
+		if (currentFile === null || currentFile.extension !== 'mw') {
+			new Notice('You must be on a Markwhen file to run this command.');
+			return;
+		}
+
+		const leaf = this.app.workspace.getLeaf('split');
+		await leaf.open(new MarkwhenView(leaf, viewType, this));
+		await leaf.openFile(currentFile);
+		await leaf.setViewState({
+			type: VIEW_TYPE_MARKWHEN,
+			active: true,
+		});
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
