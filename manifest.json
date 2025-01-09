@@ -6,5 +6,5 @@
 	"description": "Create timelines, gantt charts, calendars, and more using markwhen.",
 	"author": "Markwhen",
 	"authorUrl": "https://github.com/mark-when",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }
