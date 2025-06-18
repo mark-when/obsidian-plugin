@@ -31,7 +31,7 @@ jobs:
           if [ "$current_version" != "$previous_version" ]; then
             echo "Version changed from $previous_version to $current_version"
             echo "changed=true" >> $GITHUB_OUTPUT
-            echo "version=v$current_version" >> $GITHUB_OUTPUT
+            echo "version=$current_version" >> $GITHUB_OUTPUT
           else
             echo "Version unchanged"
             echo "changed=false" >> $GITHUB_OUTPUT
@@ -68,6 +68,6 @@ jobs:
           git push origin "$tag"
 
           gh release create "$tag" \
-            --title="Release $tag" \
+            --title="$tag" \
             --draft \
             out/main.js manifest.json styles.css
