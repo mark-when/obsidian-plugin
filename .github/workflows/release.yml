@@ -2,11 +2,44 @@ name: Release Obsidian plugin
 
 on:
   push:
-    tags:
-      - "*"
+    branches:
+      - main  # or your default branch
 
 jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version-changed: ${{ steps.version-check.outputs.changed }}
+      new-version: ${{ steps.version-check.outputs.version }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2  # Need at least 2 commits to compare
+
+      - name: Check if version changed
+        id: version-check
+        run: |
+          # Get current version from package.json
+          current_version=$(node -p "require('./package.json').version")
+          
+          # Get previous version from package.json in the previous commit
+          previous_version=$(git show HEAD~1:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin', 'utf8')).version")
+          
+          echo "Current version: $current_version"
+          echo "Previous version: $previous_version"
+          
+          if [ "$current_version" != "$previous_version" ]; then
+            echo "Version changed from $previous_version to $current_version"
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "version=v$current_version" >> $GITHUB_OUTPUT
+          else
+            echo "Version unchanged"
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
   build:
+    needs: check-version
+    if: needs.check-version.outputs.version-changed == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -26,9 +59,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          tag="${GITHUB_REF#refs/tags/}"
+          tag="${{ needs.check-version.outputs.new-version }}"
+          
+          # Create and push the tag
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git tag "$tag"
+          git push origin "$tag"
 
           gh release create "$tag" \
-            --title="$tag" \
+            --title="Release $tag" \
             --draft \
             out/main.js manifest.json styles.css
