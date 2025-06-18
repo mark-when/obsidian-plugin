@@ -2,9 +2,14 @@ import { WorkspaceLeaf, MarkdownView, TFile, Platform } from 'obsidian';
 import MarkwhenPlugin from './main';
 import { MARKWHEN_ICON } from './icons';
 export const VIEW_TYPE_MARKWHEN = 'markwhen-view';
-import { Event, Node, Timeline, get, toDateRange } from '@markwhen/parser';
-import { AppState, MarkwhenState } from '@markwhen/view-client';
-import { useColors } from './utils/colorMap';
+import { getAppState, getMarkwhenState } from './utils/markwhenState';
+import {
+	ParseResult,
+	get,
+	isEvent,
+	parse,
+	toDateRange,
+} from '@markwhen/parser';
 import { EditorView, ViewPlugin } from '@codemirror/view';
 import { StateEffect } from '@codemirror/state';
 import {
@@ -80,7 +85,7 @@ export class MarkwhenView extends MarkdownView {
 		});
 	}
 
-	updateVisualization(mw: Timeline) {
+	updateVisualization(mw: ParseResult) {
 		const frame = this.activeFrame();
 		if (!frame) {
 			return;
@@ -90,7 +95,7 @@ export class MarkwhenView extends MarkdownView {
 				type: 'appState',
 				request: true,
 				id: `markwhen_${this.updateId++}`,
-				params: this.getAppState(mw),
+				params: getAppState(mw),
 			},
 			'*'
 		);
@@ -99,7 +104,7 @@ export class MarkwhenView extends MarkdownView {
 				type: 'markwhenState',
 				request: true,
 				id: `markwhen_${this.updateId++}`,
-				params: this.getMarkwhenState(mw),
+				params: getMarkwhenState(mw, this.data),
 			},
 			'*'
 		);
@@ -230,12 +235,12 @@ export class MarkwhenView extends MarkdownView {
 					}
 					const { path, range, scale, preferredInterpolationFormat } =
 						e.data.params;
-					const event = get(events, path) as Node<Event>;
-					if (!event) {
+					const event = get(events, path);
+					if (!event || !isEvent(event)) {
 						return;
 					}
 					const newText = editEventDateRange(
-						event.value,
+						event,
 						toDateRange(range),
 						scale,
 						preferredInterpolationFormat
@@ -243,8 +248,8 @@ export class MarkwhenView extends MarkdownView {
 					if (newText) {
 						this.getCodeMirror()?.dispatch({
 							changes: {
-								from: event.value.dateRangeInText.from,
-								to: event.value.dateRangeInText.to,
+								from: event.textRanges.datePart.from,
+								to: event.textRanges.datePart.to,
 								insert: newText,
 							},
 						});
@@ -319,33 +324,11 @@ export class MarkwhenView extends MarkdownView {
 		return this.editor.cm;
 	}
 
-	getMw(): Timeline | undefined {
-		return this.getCodeMirror()?.plugin(this.codemirrorPlugin)?.markwhen;
-	}
-
-	getMarkwhenState(mw: Timeline): MarkwhenState | undefined {
-		return {
-			rawText: this.data,
-			parsed: [mw],
-			transformed: mw.events,
-		};
-	}
-
-	getAppState(mw: Timeline): AppState {
-		const isDark =
-			window.document.body.attributes
-				.getNamedItem('class')
-				?.value.contains('theme-dark') &&
-			!window.document.body.attributes
-				.getNamedItem('class')
-				?.value.contains('theme-light'); // edge: 1 & 1 or 0 & 0
-
-		return {
-			isDark,
-			hoveringPath: undefined,
-			detailPath: undefined,
-			colorMap: mw ? useColors(mw) ?? {} : {},
-		};
+	getMw(): ParseResult | undefined {
+		return (
+			this.getCodeMirror()?.plugin(this.codemirrorPlugin)?.markwhen ??
+			parse(this.data)
+		);
 	}
 
 	//Avoid loading Markdown file in Markwhen view (action icons, favicons, etc.)

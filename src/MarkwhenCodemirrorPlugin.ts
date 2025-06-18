@@ -1,9 +1,9 @@
 import type { EditorView, PluginValue, ViewUpdate } from '@codemirror/view';
-import { Timeline, emptyTimeline } from '@markwhen/parser';
+import { ParseResult, Timeline, emptyTimeline } from '@markwhen/parser';
 import parseWorker from './markwhenWorker?worker&inline';
 import { StateEffect } from '@codemirror/state';
 
-export const useParserWorker = (parsed: (mw: Timeline) => void) => {
+export const useParserWorker = (parsed: (mw: ParseResult) => void) => {
 	let running = false;
 	let parsingString = '';
 	let queuedString = '';
@@ -12,10 +12,10 @@ export const useParserWorker = (parsed: (mw: Timeline) => void) => {
 	worker.onmessage = (message: MessageEvent<any>) => {
 		const { timelines: fromWorker, error } = message.data;
 		if (!error) {
-			parsed(fromWorker[0]);
+			parsed(fromWorker);
 		} else {
-      console.log(error)
-    }
+			console.log(error);
+		}
 		if (queuedString !== parsingString) {
 			parsingString = queuedString;
 			worker.postMessage({ rawTimelineString: queuedString });
@@ -36,10 +36,10 @@ export const useParserWorker = (parsed: (mw: Timeline) => void) => {
 	};
 };
 
-export const parseResult = StateEffect.define<Timeline>();
+export const parseResult = StateEffect.define<ParseResult>();
 
 export class MarkwhenCodemirrorPlugin implements PluginValue {
-	markwhen = emptyTimeline();
+	markwhen: ParseResult = emptyTimeline() as ParseResult;
 	view: EditorView;
 	worker = useParserWorker((mw) => {
 		this.markwhen = mw;

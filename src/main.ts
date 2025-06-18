@@ -14,7 +14,9 @@ import {
 import { MARKWHEN_ICON } from './icons';
 import { MarkwhenView, VIEW_TYPE_MARKWHEN } from './MarkwhenView';
 import { getDefaultFileName } from './utils/fileUtils';
-import { ViewType } from './templates';
+import { getTemplateURL, ViewType } from './templates';
+import { parse } from '@markwhen/parser';
+import { getAppState, getMarkwhenState } from './utils/markwhenState';
 
 interface MarkwhenPluginSettings {
 	folder: string;
@@ -86,10 +88,46 @@ export default class MarkwhenPlugin extends Plugin {
 
 		this.registerExtensions(['mw'], VIEW_TYPE_MARKWHEN);
 
+		this.registerMarkdownCodeBlockProcessor(
+			'mw',
+			this.renderTimeline.bind(this)
+		);
+
 		this.addSettingTab(new MarkwhenPluginSettingTab(this.app, this));
 	}
 
 	onunload() {}
+
+	renderTimeline(mw: string, el: HTMLElement) {
+		const container = el.createEl('div', {
+			cls: 'mw-timeline',
+		});
+		const frame = container.createEl('iframe');
+		frame.src = getTemplateURL('timeline');
+		frame.height = `500px`;
+		frame.width = '100%';
+		const parsed = parse(mw);
+		frame.onload = () => {
+			frame.contentWindow?.postMessage(
+				{
+					type: 'appState',
+					request: true,
+					id: `markwhen_0`,
+					params: getAppState(parsed),
+				},
+				'*'
+			);
+			frame.contentWindow?.postMessage(
+				{
+					type: 'markwhenState',
+					request: true,
+					id: `markwhen_0`,
+					params: getMarkwhenState(parsed, mw),
+				},
+				'*'
+			);
+		};
+	}
 
 	async openViewFromCurrent(viewType: ViewType) {
 		const currentFile = this.app.workspace.getActiveFile();

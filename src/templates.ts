@@ -1,7 +1,7 @@
 import calendar from '@markwhen/calendar/dist/index.html?raw';
 import oneview from '@markwhen/oneview/dist/index.html?raw';
 import resume from '@markwhen/resume/dist/index.html?raw';
-import timeline from '@markwhen/timeline/dist/index.html?raw';
+import timeline from '@markwhen/timeline2/dist/index.html?raw';
 
 export type ViewType = 'timeline' | 'calendar' | 'resume' | 'text' | 'oneview';
 

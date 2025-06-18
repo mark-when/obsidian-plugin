@@ -4,12 +4,12 @@ import {
 	DateRangePart,
 	EUROPEAN_DATE_FORMAT,
 	Event,
+	Eventy,
+	isEvent,
 	toDateRange,
 	type DateFormat,
 	type DateRange,
 } from '@markwhen/parser';
-import type { SomeNode } from '@markwhen/parser';
-import { isEventNode, eventValue } from '@markwhen/parser';
 
 export enum Weight {
 	SECOND = 0,
@@ -263,9 +263,9 @@ export function dateRangeToString(
 	return `${asIso(range.fromDateTime)} - ${asIso(range.toDateTime)}`;
 }
 
-export const eventMidpoint = (node: SomeNode): DateTime | undefined => {
-	if (isEventNode(node)) {
-		return dateMidpoint(toDateRange(eventValue(node).dateRangeIso));
+export const eventMidpoint = (node: Eventy): DateTime | undefined => {
+	if (isEvent(node)) {
+		return dateMidpoint(toDateRange(node.dateRangeIso));
 	} else {
 		if (!node.range || !node.range.fromDateTime || !node.range.toDateTime)
 			return undefined;

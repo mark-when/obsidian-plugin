@@ -1,6 +1,6 @@
 {
 	"name": "markwhen",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"description": "Markwhen integration for Obsidian.md",
 	"main": "main.js",
 	"type": "module",
@@ -38,9 +38,10 @@
 		"@codemirror/view": "^6.26.3",
 		"@markwhen/calendar": "^1.3.4",
 		"@markwhen/oneview": "^1.0.0",
-		"@markwhen/parser": "^0.10.15",
+		"@markwhen/parser": "^0.15.0",
 		"@markwhen/resume": "^1.1.0",
 		"@markwhen/timeline": "^1.3.3",
-		"@markwhen/view-client": "^1.4.4"
+		"@markwhen/timeline2": "^1.4.4",
+		"@markwhen/view-client": "^1.5.3"
 	}
 }
