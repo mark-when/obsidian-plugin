@@ -18,12 +18,16 @@ import { getTemplateURL, ViewType } from './templates';
 import { parse } from '@markwhen/parser';
 import { getAppState, getMarkwhenState } from './utils/markwhenState';
 
-interface MarkwhenPluginSettings {
+export type EditorMode = 'plain' | 'wysiwyg';
+
+export interface MarkwhenPluginSettings {
 	folder: string;
+	editorMode: EditorMode;
 }
 
 const DEFAULT_SETTINGS: MarkwhenPluginSettings = {
 	folder: 'Markwhen',
+	editorMode: 'wysiwyg',
 };
 
 export default class MarkwhenPlugin extends Plugin {
@@ -213,6 +217,21 @@ class MarkwhenPluginSettingTab extends PluginSettingTab {
 		const { containerEl } = this;
 
 		containerEl.empty();
+
+		// Editor Mode Setting
+		new Setting(containerEl)
+			.setName('Event editor mode')
+			.setDesc('Choose how to edit event descriptions when clicking the pencil button.')
+			.addDropdown((dropdown) => {
+				dropdown
+					.addOption('wysiwyg', 'WYSIWYG (Rich Text)')
+					.addOption('plain', 'Plain Text (Markdown)')
+					.setValue(this.plugin.settings.editorMode)
+					.onChange(async (value) => {
+						this.plugin.settings.editorMode = value as EditorMode;
+						await this.plugin.saveSettings();
+					});
+			});
 
 		const folderSetting = new Setting(containerEl)
 			.setName('Default folder')

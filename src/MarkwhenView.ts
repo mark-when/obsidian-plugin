@@ -20,6 +20,8 @@ import {
 import { type ViewType, getTemplateURL } from './templates';
 import { editEventDateRange } from './utils/dateTextInterpolation';
 import { dateRangeToString } from './utils/dateTimeUtilities';
+import { EventDetailModal } from './EventDetailModal';
+import { WysiwygEventModal } from './WysiwygEventModal';
 
 export class MarkwhenView extends MarkdownView {
 	readonly plugin: MarkwhenPlugin;
@@ -133,7 +135,7 @@ export class MarkwhenView extends MarkdownView {
 	}
 
 	async onLoadFile(file: TFile) {
-		super.onLoadFile(file);
+		await super.onLoadFile(file);
 
 		// Idk how else to register these extensions - I don't want to
 		// register them in the main file because I need the update listener
@@ -145,6 +147,43 @@ export class MarkwhenView extends MarkdownView {
 		setTimeout(() => {
 			this.registerExtensions();
 		}, 500);
+
+		// Force update visualization when file changes
+		// Send multiple updates to ensure the iframe properly receives new state
+		this.forceRefreshVisualization(file.name);
+	}
+
+	/**
+	 * Force refresh the visualization with multiple update attempts
+	 * This helps when switching between files to ensure the iframe state is properly reset
+	 */
+	private forceRefreshVisualization(fileName: string) {
+		// First update after content is loaded
+		setTimeout(() => {
+			const mw = this.getMw();
+			if (mw) {
+				console.log('[Markwhen] File loaded (update 1):', fileName);
+				this.updateVisualization(mw);
+			}
+		}, 100);
+
+		// Second update after extensions are registered
+		setTimeout(() => {
+			const mw = this.getMw();
+			if (mw) {
+				console.log('[Markwhen] File loaded (update 2):', fileName);
+				this.updateVisualization(mw);
+			}
+		}, 600);
+
+		// Third update as a final fallback
+		setTimeout(() => {
+			const mw = this.getMw();
+			if (mw) {
+				console.log('[Markwhen] File loaded (update 3):', fileName);
+				this.updateVisualization(mw);
+			}
+		}, 1200);
 	}
 
 	async onOpen() {
@@ -202,6 +241,15 @@ export class MarkwhenView extends MarkdownView {
 
 		this.setViewType(this.viewType);
 		this.registerDomEvent(window, 'message', async (e) => {
+			// Debug: Log ALL messages to find what pencil button sends
+			console.log('[Markwhen] ANY message received:', {
+				type: e.data?.type,
+				request: e.data?.request,
+				params: e.data?.params,
+				fromActiveFrame: e.source === this.activeFrame()?.contentWindow,
+				data: e.data
+			});
+
 			if (
 				e.source == this.activeFrame()?.contentWindow &&
 				e.data.request
@@ -254,9 +302,218 @@ export class MarkwhenView extends MarkdownView {
 							},
 						});
 					}
+				} else if (e.data.type === 'setDetailPath' || e.data.type === 'showInEditor') {
+					// Handle event click (pencil button sends 'showInEditor')
+					const path = e.data.params;
+					console.log('[Markwhen] Event detail request received:', e.data.type, 'path:', path);
+
+					if (!path) {
+						console.log('[Markwhen] No path provided');
+						return;
+					}
+
+					const events = this.getMw()?.events;
+					if (!events) {
+						console.log('[Markwhen] No events found');
+						return;
+					}
+
+					const eventNode = get(events, path) as Node<Event>;
+					if (!eventNode || !eventNode.value) {
+						console.log('[Markwhen] Event not found at path:', path);
+						return;
+					}
+
+					console.log('[Markwhen] Opening modal for event:', eventNode.value);
+					this.showEventDetailModal(eventNode.value);
 				}
 			}
 		});
+	}
+
+	showEventDetailModal(event: Event) {
+		const editorMode = this.plugin.settings.editorMode || 'wysiwyg';
+
+		if (editorMode === 'wysiwyg') {
+			const modal = new WysiwygEventModal(
+				this.app,
+				event,
+				this.data,
+				(newTitle: string, newDescription: string, newDateRange?: string) => {
+					this.updateEventTitleDescriptionAndDate(event, newTitle, newDescription, newDateRange);
+				}
+			);
+			modal.open();
+		} else {
+			const modal = new EventDetailModal(
+				this.app,
+				event,
+				this.data,
+				(newDescription: string) => {
+					this.updateEventDescription(event, newDescription);
+				}
+			);
+			modal.open();
+		}
+	}
+
+	/**
+	 * Update event with new title, description, and optionally date range
+	 */
+	updateEventTitleDescriptionAndDate(event: Event, newTitle: string, newDescription: string, newDateRange?: string) {
+		const cm = this.getCodeMirror();
+		if (!cm) return;
+
+		const eventAny = event as any;
+		const dateFrom = eventAny.dateRangeInText?.from ?? 0;
+		const dateTo = eventAny.dateRangeInText?.to ?? 0;
+
+		// Find the first line boundaries
+		let lineStart = dateFrom;
+		while (lineStart > 0 && this.data[lineStart - 1] !== '\n') {
+			lineStart--;
+		}
+
+		let lineEnd = dateTo;
+		while (lineEnd < this.data.length && this.data[lineEnd] !== '\n') {
+			lineEnd++;
+		}
+
+		const firstLine = this.data.substring(lineStart, lineEnd);
+
+		// Find the colon AFTER the date part ends, not the first colon
+		const dateEndInLine = dateTo - lineStart;
+		const afterDatePart = firstLine.substring(dateEndInLine);
+		const colonInRest = afterDatePart.indexOf(':');
+
+		// Get the original date part (for fallback if no new date provided)
+		const originalDatePart = firstLine.substring(0, dateEndInLine);
+
+		// Use new date range if provided, otherwise keep original
+		const datePart = newDateRange || originalDatePart;
+
+		let tagsPart = '';
+		if (colonInRest !== -1) {
+			const afterColon = afterDatePart.substring(colonInRest + 1);
+			const tagMatches = afterColon.match(/#\w+/g);
+			if (tagMatches) {
+				tagsPart = ' ' + tagMatches.join(' ');
+			}
+		} else {
+			const tagMatches = afterDatePart.match(/#\w+/g);
+			if (tagMatches) {
+				tagsPart = ' ' + tagMatches.join(' ');
+			}
+		}
+
+		// Find where the event ends
+		let eventEnd = lineEnd + 1;
+		while (eventEnd < this.data.length) {
+			const nextLineEnd = this.data.indexOf('\n', eventEnd);
+			const nextLine = nextLineEnd === -1
+				? this.data.substring(eventEnd)
+				: this.data.substring(eventEnd, nextLineEnd);
+
+			if (this.looksLikeNewEvent(nextLine) || this.looksLikeSection(nextLine)) {
+				break;
+			}
+
+			eventEnd = nextLineEnd === -1 ? this.data.length : nextLineEnd + 1;
+		}
+
+		// Build new event text
+		let newFirstLine = `${datePart}: ${newTitle}${tagsPart}`;
+		let newEventText = newFirstLine;
+		if (newDescription && newDescription.trim()) {
+			newEventText += '\n' + newDescription;
+		}
+
+		// Replace in editor
+		cm.dispatch({
+			changes: {
+				from: lineStart,
+				to: eventEnd,
+				insert: newEventText + '\n',
+			},
+		});
+	}
+
+	updateEventTitleAndDescription(event: Event, newTitle: string, newDescription: string) {
+		// Delegate to the new method without date change
+		this.updateEventTitleDescriptionAndDate(event, newTitle, newDescription);
+	}
+
+	updateEventDescription(event: Event, newDescription: string) {
+		const cm = this.getCodeMirror();
+		if (!cm) return;
+
+		const eventAny = event as any;
+		const dateFrom = eventAny.dateRangeInText?.from ?? 0;
+		const dateTo = eventAny.dateRangeInText?.to ?? 0;
+
+		// Find the first line (date + title)
+		let lineStart = dateFrom;
+		while (lineStart > 0 && this.data[lineStart - 1] !== '\n') {
+			lineStart--;
+		}
+
+		let lineEnd = dateTo;
+		while (lineEnd < this.data.length && this.data[lineEnd] !== '\n') {
+			lineEnd++;
+		}
+
+		const firstLine = this.data.substring(lineStart, lineEnd);
+
+		// Find where the event ends (next event or section)
+		let eventEnd = lineEnd + 1;
+		while (eventEnd < this.data.length) {
+			const nextLineEnd = this.data.indexOf('\n', eventEnd);
+			const nextLine = nextLineEnd === -1
+				? this.data.substring(eventEnd)
+				: this.data.substring(eventEnd, nextLineEnd);
+
+			if (this.looksLikeNewEvent(nextLine) || this.looksLikeSection(nextLine)) {
+				break;
+			}
+
+			eventEnd = nextLineEnd === -1 ? this.data.length : nextLineEnd + 1;
+		}
+
+		// Build new event text
+		let newEventText = firstLine;
+		if (newDescription && newDescription.trim()) {
+			newEventText += '\n' + newDescription;
+		}
+
+		// Replace in editor
+		cm.dispatch({
+			changes: {
+				from: lineStart,
+				to: eventEnd,
+				insert: newEventText + '\n',
+			},
+		});
+	}
+
+	looksLikeNewEvent(line: string): boolean {
+		const trimmed = line.trim();
+		if (!trimmed) return false;
+
+		const datePatterns = [
+			/^\d{4}[-/]\d{1,2}[-/]\d{1,2}/,
+			/^\d{1,2}[-/]\d{1,2}[-/]\d{4}/,
+			/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/i,
+			/^now\b/i,
+			/^today\b/i,
+			/^tomorrow\b/i,
+			/^\d+\s+(day|week|month|year)s?\s+(ago|from now)/i,
+		];
+
+		return datePatterns.some(pattern => pattern.test(trimmed));
+	}
+
+	looksLikeSection(line: string): boolean {
+		return line.trim().toLowerCase().startsWith('section ');
 	}
 
 	activeFrame() {

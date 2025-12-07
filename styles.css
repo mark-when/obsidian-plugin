@@ -21,3 +21,453 @@ If your plugin does not need CSS, delete this file.
 .mw-hidden {
   display: none !important;
 }
+
+/* Event Detail Modal Styles */
+.markwhen-event-detail-modal {
+  padding: 20px;
+}
+
+.markwhen-modal-title {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.markwhen-event-title {
+  margin: 0 0 15px 0;
+  font-size: 1.4em;
+}
+
+.markwhen-date-range {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+}
+
+.markwhen-tags {
+  margin-bottom: 15px;
+}
+
+.markwhen-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 2px;
+  border-radius: 12px;
+  background-color: var(--background-modifier-hover);
+  font-size: 12px;
+  color: var(--text-accent);
+}
+
+.markwhen-description-container {
+  margin: 15px 0;
+  min-height: 100px;
+}
+
+.markwhen-description-view {
+  padding: 10px;
+  background-color: var(--background-secondary);
+  border-radius: 8px;
+  min-height: 80px;
+}
+
+.markwhen-no-description {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.markwhen-button-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.markwhen-description-edit {
+  margin-top: 10px;
+}
+
+.markwhen-mode-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.markwhen-split-view {
+  display: flex;
+  gap: 15px;
+  margin: 10px 0;
+}
+
+.markwhen-editor-pane,
+.markwhen-preview-pane {
+  flex: 1;
+  min-width: 0;
+}
+
+.markwhen-pane-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+
+.markwhen-description-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 10px;
+  font-family: var(--font-monospace);
+  font-size: 14px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  resize: vertical;
+}
+
+.markwhen-source-only-textarea {
+  min-height: 300px;
+}
+
+.markwhen-preview-content {
+  padding: 10px;
+  background-color: var(--background-secondary);
+  border-radius: 6px;
+  min-height: 200px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.markwhen-edit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: flex-end;
+}
+
+/* Expanded modal */
+.markwhen-modal-expanded {
+  width: 90vw !important;
+  max-width: 1200px !important;
+  height: 85vh !important;
+}
+
+.markwhen-modal-expanded .markwhen-description-container {
+  height: calc(100% - 200px);
+}
+
+.markwhen-modal-expanded .markwhen-split-view {
+  height: 100%;
+}
+
+.markwhen-modal-expanded .markwhen-preview-content,
+.markwhen-modal-expanded .markwhen-description-textarea {
+  height: 100%;
+  max-height: none;
+}
+
+/* ===== WYSIWYG Event Modal Styles ===== */
+
+.mw-wysiwyg-modal-container {
+  width: 700px !important;
+  max-width: 90vw !important;
+}
+
+.markwhen-wysiwyg-modal {
+  padding: 0;
+}
+
+.markwhen-wysiwyg-modal .modal-content {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Header */
+.mw-wysiwyg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+.mw-wysiwyg-title-section {
+  flex: 1;
+}
+
+.mw-wysiwyg-title {
+  margin: 0 0 4px 0;
+  font-size: 1.3em;
+  font-weight: 600;
+}
+
+.mw-wysiwyg-title-input {
+  width: 100%;
+  font-size: 1.3em;
+  font-weight: 600;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-normal);
+  transition: all 0.15s;
+}
+
+.mw-wysiwyg-title-input:hover {
+  background: var(--background-modifier-hover);
+}
+
+.mw-wysiwyg-title-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  background: var(--background-primary);
+}
+
+/* Date/Time Picker Styles - Clean Compact Design */
+.mw-date-picker-section {
+  margin: 8px 0;
+}
+
+.mw-datetime-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mw-datetime-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mw-datetime-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.mw-datetime-input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mw-datetime-input {
+  padding: 6px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 13px;
+  font-family: var(--font-text);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.mw-datetime-input:hover {
+  border-color: var(--background-modifier-border-hover);
+}
+
+.mw-datetime-input:focus {
+  outline: none;
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--interactive-accent-hover);
+}
+
+.mw-datetime-arrow {
+  font-size: 18px;
+  color: var(--text-muted);
+  padding: 0 4px;
+  margin-top: 18px;
+}
+
+.mw-datetime-summary {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.mw-summary-text {
+  color: var(--text-normal);
+  font-weight: 500;
+}
+
+.mw-summary-arrow {
+  color: var(--text-muted);
+  margin: 0 4px;
+}
+
+/* Responsive: stack on narrow modals */
+@media (max-width: 500px) {
+  .mw-datetime-picker {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mw-datetime-arrow {
+    text-align: center;
+    margin-top: 0;
+  }
+
+  .mw-datetime-input {
+    width: 100%;
+  }
+}
+
+.mw-wysiwyg-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mw-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background-color: var(--background-modifier-hover);
+  font-size: 11px;
+  color: var(--text-accent);
+}
+
+.mw-expand-btn {
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: background-color 0.15s;
+}
+
+.mw-expand-btn:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* Toolbar */
+.mw-wysiwyg-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 8px 12px;
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mw-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+
+.mw-toolbar-btn:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.mw-toolbar-btn:active {
+  background-color: var(--background-modifier-active-hover);
+}
+
+.mw-toolbar-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mw-toolbar-separator {
+  width: 1px;
+  height: 24px;
+  background: var(--background-modifier-border);
+  margin: 4px 8px;
+}
+
+/* WYSIWYG Editor Container */
+.mw-wysiwyg-editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+  overflow: hidden;
+}
+
+.mw-editor-info {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--background-secondary-alt);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mw-wysiwyg-editor-wrapper {
+  flex: 1;
+  overflow: auto;
+  background: var(--background-primary);
+}
+
+.mw-wysiwyg-editor-wrapper .cm-editor {
+  height: 100%;
+  min-height: 200px;
+}
+
+.mw-wysiwyg-editor-wrapper .cm-scroller {
+  font-family: var(--font-text);
+}
+
+.mw-actions-spacer {
+  flex: 1;
+}
+
+/* Actions */
+.mw-wysiwyg-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+}
+
+/* Expanded modal */
+.mw-wysiwyg-expanded {
+  width: 90vw !important;
+  max-width: 1400px !important;
+  height: 85vh !important;
+}
+
+.mw-wysiwyg-expanded .mw-wysiwyg-container {
+  flex: 1;
+}
+
+.mw-wysiwyg-expanded .mw-wysiwyg-textarea,
+.mw-wysiwyg-expanded .mw-wysiwyg-preview {
+  min-height: 400px;
+}
+
+/* Responsive - stack on narrow screens */
+@media (max-width: 700px) {
+  .mw-wysiwyg-container {
+    flex-direction: column;
+  }
+
+  .mw-wysiwyg-editor-pane {
+    border-right: none;
+    border-bottom: 1px solid var(--background-modifier-border);
+  }
+
+  .mw-wysiwyg-editor-pane,
+  .mw-wysiwyg-preview-pane {
+    min-height: 150px;
+  }
+}

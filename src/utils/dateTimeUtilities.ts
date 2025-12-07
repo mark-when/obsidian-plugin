@@ -260,7 +260,53 @@ export function dateRangeToString(
 			? `${fromAsString} - ${toAsString}`
 			: `${fromAsString}/${toAsString}`;
 	}
-	return `${asIso(range.fromDateTime)} - ${asIso(range.toDateTime)}`;
+	// Use a cleaner format for time-specific ranges
+	return formatDateTimeRange(range, scale);
+}
+
+/**
+ * Format a date/time range in a clean, readable format
+ */
+function formatDateTimeRange(range: DateRange, scale: DisplayScale): string {
+	const from = range.fromDateTime;
+	const to = range.toDateTime;
+
+	// Check if same day
+	const sameDay = from.hasSame(to, 'day');
+	const sameMinute = from.hasSame(to, 'minute');
+
+	// Format the date part
+	const dateStr = from.toFormat('yyyy-MM-dd');
+
+	// If same minute (instant), just show date and time
+	if (sameMinute) {
+		if (from.hour === 0 && from.minute === 0) {
+			return dateStr;
+		}
+		return `${dateStr} ${from.toFormat('HH:mm')}`;
+	}
+
+	// If same day, show date with time range
+	if (sameDay) {
+		const fromTime = from.toFormat('HH:mm');
+		const toTime = to.toFormat('HH:mm');
+		return `${dateStr} ${fromTime}-${toTime}`;
+	}
+
+	// Different days - show both dates
+	const toDateStr = to.toFormat('yyyy-MM-dd');
+
+	// If both have non-midnight times, show times too
+	const fromHasTime = from.hour !== 0 || from.minute !== 0;
+	const toHasTime = to.hour !== 0 || to.minute !== 0;
+
+	if (fromHasTime || toHasTime) {
+		const fromFull = fromHasTime ? `${dateStr} ${from.toFormat('HH:mm')}` : dateStr;
+		const toFull = toHasTime ? `${toDateStr} ${to.toFormat('HH:mm')}` : toDateStr;
+		return `${fromFull}/${toFull}`;
+	}
+
+	return `${dateStr}/${toDateStr}`;
 }
 
 export const eventMidpoint = (node: Eventy): DateTime | undefined => {

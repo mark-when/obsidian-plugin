@@ -34,6 +34,9 @@
 		"watch": "^0.13.0"
 	},
 	"dependencies": {
+		"@codemirror/commands": "^6.10.0",
+		"@codemirror/lang-markdown": "^6.5.0",
+		"@codemirror/language": "^6.11.3",
 		"@codemirror/state": "^6.4.1",
 		"@codemirror/view": "^6.26.3",
 		"@markwhen/calendar": "^1.3.4",
