@@ -36,7 +36,7 @@
 	"dependencies": {
 		"@codemirror/state": "^6.4.1",
 		"@codemirror/view": "^6.26.3",
-		"@markwhen/calendar": "^1.3.4",
+		"@markwhen/calendar": "^1.3.6",
 		"@markwhen/oneview": "^1.0.0",
 		"@markwhen/parser": "^1.0.1",
 		"@markwhen/resume": "^1.1.0",
